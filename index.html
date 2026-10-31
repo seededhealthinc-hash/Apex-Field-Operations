@@ -33,7 +33,7 @@ input, textarea, select { font-size: 16px !important; }
 <div><label class="block text-xs font-semibold tracking-wider uppercase text-slate-400 mb-1">Client Name</label><input type="text" id="clientName" placeholder="e.g. Sarah Jenkins" class="w-full bg-surface-900 border border-slate-700 rounded-xl px-3.5 py-3 text-white placeholder-slate-500"></div>
 <div><label class="block text-xs font-semibold tracking-wider uppercase text-slate-400 mb-1">Client Mobile</label><input type="tel" id="clientPhone" placeholder="e.g. 07911 123456" class="w-full bg-surface-900 border border-slate-700 rounded-xl px-3.5 py-3 text-white placeholder-slate-500"></div>
 </div>
-<div><label class="block text-xs font-semibold tracking-wider uppercase text-slate-400 mb-1">Job Location / Postcode</label><input type="text" id="siteAddress" placeholder="e.g. Hammersmith W6" class="w-full bg-surface-900 border border-slate-700 rounded-xl px-3.5 py-3 text-white placeholder-slate-500"></div>
+<div><label class="block text-xs font-semibold tracking-wider uppercase text-slate-400 mb-1">Job Location / Postcode</label><input type="text" id="siteAddress" placeholder="e.g. Hammersmith W6" class="w-full bg-surface-900 border border-slate-700 rounded-xl px-3.5 py-3 text-white placeholder-slate-500"></div> <div><label class="block text-xs font-semibold tracking-wider uppercase text-slate-400 mb-1">Appointment Time (for Calendar)</label><input type="datetime-local" id="appointmentTime" class="w-full bg-surface-900 border border-slate-700 rounded-xl px-3.5 py-3 text-white"></div>
 <div>
 <div class="flex items-center justify-between mb-1"><label class="block text-xs font-semibold tracking-wider uppercase text-slate-400">Job Scope &amp; Parts (Dictate or type)</label><span id="recordingStatus" class="text-xs font-medium text-slate-500">Mic Idle</span></div>
 <div class="relative"><textarea id="jobNotes" rows="4" placeholder="Tap mic and speak: scope, hours on tools, materials needed... or just type it here." class="w-full bg-surface-900 border border-slate-700 rounded-xl p-3.5 text-white placeholder-slate-500 resize-none leading-relaxed"></textarea>
@@ -125,6 +125,7 @@ function buildPayload() {
     Job_Description: notes,
     Customer_Location: location,
     Trade: trade,
+    Start_Time: (function(){ var v=document.getElementById('appointmentTime').value; return v ? new Date(v).toISOString() : ''; })(),
     timestamp: new Date().toISOString(),
     client_name: document.getElementById('clientName').value.trim(),
     client_phone: document.getElementById('clientPhone').value.trim(),
@@ -139,6 +140,7 @@ document.getElementById('sampleBtn').addEventListener('click', function() {
   document.getElementById('clientPhone').value = "";
   document.getElementById('siteAddress').value = "Hammersmith W6";
   jobNotes.value = "Fix leaking kitchen tap, replace washer and cartridge. Labour 1 hour. Parts: washer and cartridge.";
+  document.getElementById('appointmentTime').value = "2026-11-15T10:00";
 });
 document.getElementById('previewBtn').addEventListener('click', function() {
   var box = document.getElementById('previewBox');
@@ -165,6 +167,13 @@ var statusBanner = document.getElementById('statusBanner');
 intakeForm.addEventListener('submit', async function(e) {
   e.preventDefault();
   if (isRecording && recognition) recognition.stop();
+  var apptVal = document.getElementById('appointmentTime').value;
+  if (!apptVal) {
+    statusBanner.className = "rounded-xl p-3 text-xs font-medium border bg-rose-500/10 text-rose-400 border-rose-500/20";
+    statusBanner.textContent = "Pick an appointment time first — Make needs a Start_Time for the Calendar event.";
+    statusBanner.classList.remove("hidden");
+    return;
+  }
   var webhookUrl = document.getElementById('settingWebhook').value.trim();
   if (!webhookUrl) {
     statusBanner.className = "rounded-xl p-3 text-xs font-medium border bg-rose-500/10 text-rose-400 border-rose-500/20";
