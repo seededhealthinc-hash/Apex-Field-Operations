@@ -125,7 +125,7 @@ function buildPayload() {
     Job_Description: notes,
     Customer_Location: location,
     Trade: trade,
-    Start_Time: (function(){ var v=document.getElementById('appointmentTime').value; return v ? new Date(v).toISOString() : ''; })(),
+    Start_Time: (function(){ var v=document.getElementById('appointmentTime').value; return v ? (v.length===16 ? v+':00' : v) : ''; })(), // wall-clock London time, no browser-timezone conversion — Make interprets it as Europe/London
     timestamp: new Date().toISOString(),
     client_name: document.getElementById('clientName').value.trim(),
     client_phone: document.getElementById('clientPhone').value.trim(),
