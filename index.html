@@ -95,6 +95,7 @@ var jobNotes = document.getElementById('jobNotes');
 var recordingStatus = document.getElementById('recordingStatus');
 var recognition = null;
 var isRecording = false;
+var dictationBase = '';
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SR();
@@ -102,13 +103,23 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
   recognition.interimResults = true;
   recognition.lang = 'en-GB';
   recognition.onstart = function() { isRecording = true; recordingStatus.textContent = "Listening..."; recordingStatus.classList.add("text-brand-500"); micBtn.classList.add("pulse-record"); };
-  recognition.onresult = function(e) { var t = ''; for (var i = e.resultIndex; i < e.results.length; ++i) { t += e.results[i][0].transcript; } jobNotes.value = t; };
+  recognition.onresult = function(e) {
+    // FIX 2026-10-31: previously jobNotes.value was overwritten with only the
+    // latest result chunk, so a pause / restart lost earlier dictation.
+    // Now: keep the text that was in the box when recording started, plus
+    // everything said in this session (final + interim), appended, not replaced.
+    var sessionText = '';
+    for (var i = 0; i < e.results.length; ++i) { sessionText += e.results[i][0].transcript; }
+    sessionText = sessionText.trim();
+    if (dictationBase) { jobNotes.value = sessionText ? dictationBase + ' ' + sessionText : dictationBase; }
+    else { jobNotes.value = sessionText; }
+  };
   recognition.onend = function() { isRecording = false; recordingStatus.textContent = "Mic Idle"; micBtn.classList.remove("pulse-record"); };
   recognition.onerror = function(e) { recordingStatus.textContent = "Voice error: " + (e.error || 'unknown') + " — type instead, that still passes."; isRecording = false; micBtn.classList.remove("pulse-record"); };
 } else {
   recordingStatus.textContent = "Voice not supported in this browser — type instead, that still passes.";
 }
-micBtn.addEventListener('click', function() { if (!recognition) return; if (!isRecording) recognition.start(); else recognition.stop(); });
+micBtn.addEventListener('click', function() { if (!recognition) return; if (!isRecording) { dictationBase = jobNotes.value.trim(); recognition.start(); } else recognition.stop(); });
 function buildPayload() {
   var photo = document.getElementById('photoInput');
   var photoName = (photo && photo.files && photo.files.length > 0) ? photo.files[0].name : "";
