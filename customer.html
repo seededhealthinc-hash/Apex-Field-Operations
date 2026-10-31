@@ -38,7 +38,9 @@ small{color:#bbb}
 <select id="ctrade"><option>Plumbing</option><option>Electrical</option><option>Heating / Gas</option><option>Carpentry</option><option>Other</option></select>
 <label for="cloc">Job location</label>
 <input id="cloc" placeholder="e.g. Hammersmith W6">
-<label for="cjob">Describe the problem</label>
+<label for="cjob">Describe the problem — type it, or tap Speak and talk</label>
+<button id="micBtn" type="button" style="background:#222;color:#fff;border:1px solid #666">🎤 Speak your problem</button>
+<p><small>Speaking is a first option, not an extra — if you find it easier to talk than type, use Speak. If you prefer typing, type. Both work. On iPhone/Android you can also use the keyboard mic.</small></p>
 <textarea id="cjob" placeholder="e.g. Boiler has stopped, house is cold, I have a newborn at home. Or: water leaking under the kitchen sink. Mention gas smell, children, elderly people, or water damage if any apply — it helps the safety advice."></textarea>
 <button id="sendBtn" type="button">Get instant reply</button>
 <div id="err"></div>
@@ -55,6 +57,18 @@ small{color:#bbb}
 </main>
 <script>
 const $=id=>document.getElementById(id);
+let rec=null,dictBase='';
+$('micBtn').onclick=()=>{
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Voice is not supported in this browser — type instead, or use your phone keyboard mic. Chrome and Safari with Dictation on do support it.');return;}
+  if(rec){try{rec.stop();}catch(e){} rec=null;$('micBtn').textContent='🎤 Speak your problem';return;}
+  rec=new SR();rec.lang='en-GB';rec.continuous=true;rec.interimResults=true;
+  dictBase=$('cjob').value?$('cjob').value+' ':'';
+  rec.onresult=e=>{let t='';for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;$('cjob').value=dictBase+t;};
+  rec.onend=()=>{rec=null;$('micBtn').textContent='🎤 Speak your problem';};
+  rec.onerror=()=>{rec=null;$('micBtn').textContent='🎤 Speak your problem';};
+  rec.start();$('micBtn').textContent='⏹ Stop speaking — tap again to stop';
+};
 $('wh').value=localStorage.getItem('apex_customer_webhook')||'';
 if($('wh').value) $('savedMsg').innerHTML='<small>Saved on this device.</small>';
 $('saveBtn').onclick=()=>{localStorage.setItem('apex_customer_webhook',$('wh').value.trim());$('savedMsg').innerHTML='<small>Saved on this device.</small>';};
