@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Apex Field Operations</title>
+<style>body{font-family:system-ui,Arial,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem;line-height:1.6;color:#111}h1{font-size:1.6rem}h2{font-size:1.2rem;margin-top:1.5rem}</style></head>
+<body>
+<h1>Privacy Policy — Apex Field Operations</h1>
+<p><strong>Developer:</strong> Built by Seeded &nbsp;|&nbsp; <strong>Organisation:</strong> Seeded Health Ltd &nbsp;|&nbsp; <strong>Contact for privacy questions:</strong> alize@seededhealth.co.uk</p>
+<p>Last updated: 31 October 2026. This policy describes the Apex Field Operations app (TESTING build and intended clone-per-tradesperson model).</p>
+<h2>What the app does</h2>
+<p>A tradesperson speaks or types job notes on site. The app sends those notes to the tradesperson's own backend (Make webhook, Google Gemini AI, Google Sheets quote log, Google Maps travel time/distance, Google Calendar slot) and returns a line-item quote marked Pending Review. Nothing is sent to the tradesperson's customer until the tradesperson reviews and confirms it.</p>
+<h2>Data handled</h2>
+<ul>
+<li>Job notes as spoken or typed by the tradesperson (job description, scope, labour/materials).</li>
+<li>Customer details the tradesperson enters: customer name, phone number, site/job location.</li>
+<li>Trade type, rates, calendar slot / start time for the job, and travel time/distance for the site.</li>
+<li>A photo filename only in the current frontend — photo content is not sent in the payload checked 29 October 2026.</li>
+<li>Voice: dictation uses the device/browser speech service where available. Audio/voice recordings are captured only when the user initiates dictation, for transcription/processing, and are not shared with third-party advertising.</li>
+</ul>
+<h2>Data the app does not collect</h2>
+<p>No per-tradesperson login in the current demo (one webhook, Sheet and Calendar for testing). The intended real model is a clone per tradesperson (own webhook/Sheet/Calendar/rates) so tradespeople never see each other's jobs. No payment details are collected by this app; billing, if any, is handled externally via the web/Stripe route, not in the app.</p>
+<h2>Third parties</h2>
+<p>Make.com (webhook/automation), Google Gemini (quote parsing), Google Sheets (quote log), Google Calendar (slot), Google Maps (travel time/distance). Each has its own terms and privacy policy. Data is encrypted in transit (HTTPS/TLS).</p>
+<h2>Retention and deletion</h2>
+<p>Quote logs, Sheets rows and Calendar events are retained only as long as needed to provide the quote service. A tradesperson or their customer can request deletion of their data by emailing alize@seededhealth.co.uk; data will be deleted on request, subject to legal retention obligations.</p>
+<h2>Permissions</h2>
+<p>Microphone: to dictate job notes. Location: only the job site address entered, to calculate travel time/distance. Calendar: to hold a slot for the job.</p>
+<p>This policy is for Apex Field Operations only. It is not the RAMStrack policy.</p>
+</body></html>
