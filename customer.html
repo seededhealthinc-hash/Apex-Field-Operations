@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Apex Field Operations — Get help now</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#131313;color:#f2f2f2;margin:0;padding:16px}
+main{max-width:640px;margin:0 auto}
+h1{font-size:26px;margin:8px 0 4px} p{line-height:1.5}
+label{display:block;margin:14px 0 4px;font-weight:600}
+input,select,textarea{width:100%;box-sizing:border-box;padding:12px;border-radius:10px;border:1px solid #444;background:#1f1f1f;color:#fff;font-size:16px}
+textarea{min-height:110px}
+button{width:100%;padding:14px;border:0;border-radius:12px;background:#ff7a00;color:#000;font-weight:800;font-size:17px;margin-top:16px;cursor:pointer}
+button:disabled{opacity:.6}
+.banner{background:#7a1f1f;border:1px solid #ff5a5a;border-radius:12px;padding:12px 14px}
+.banner b{color:#ffd7d7}
+.note{background:#222;border:1px solid #444;border-radius:12px;padding:12px 14px;margin-top:14px}
+#reply{display:none;white-space:pre-wrap;background:#1e2a1e;border:1px solid #4caf50;border-radius:12px;padding:14px;margin-top:16px;line-height:1.55}
+#err{display:none;background:#3a1a1a;border:1px solid #ff5a5a;border-radius:12px;padding:12px 14px;margin-top:14px}
+small{color:#bbb}
+.badge{display:inline-block;background:#2e7d32;color:#fff;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700}
+</style>
+</head>
+<body><main>
+<span class="badge">TESTING — CUSTOMER PAGE</span>
+<h1>APEX FIELD OPS</h1>
+<p><b>Get help now.</b> Tell us what's wrong and you'll get an instant first reply. This is not a confirmed booking yet — a tradesperson will confirm the price and time.</p>
+<div class="banner"><b>If you smell gas, do not wait for a reply.</b> Open windows, turn off the gas meter valve if you can do so safely, do not flick electrical switches, leave the property if you are worried, and call the National Gas Emergency number <b>0800 111 999</b> straight away.</div>
+
+<label for="cname">Your name</label>
+<input id="cname" placeholder="e.g. Alex">
+<label for="cphone">Phone number</label>
+<input id="cphone" inputmode="tel" placeholder="e.g. 07700 900123">
+<label for="cemail">Email (optional, for a follow-up copy)</label>
+<input id="cemail" inputmode="email" placeholder="you@example.com">
+<label for="ctrade">What trade do you need?</label>
+<select id="ctrade"><option>Plumbing</option><option>Electrical</option><option>Heating / Gas</option><option>Carpentry</option><option>Other</option></select>
+<label for="cloc">Job location</label>
+<input id="cloc" placeholder="e.g. Hammersmith W6">
+<label for="cjob">Describe the problem</label>
+<textarea id="cjob" placeholder="e.g. Boiler has stopped, house is cold, I have a newborn at home. Or: water leaking under the kitchen sink. Mention gas smell, children, elderly people, or water damage if any apply — it helps the safety advice."></textarea>
+<button id="sendBtn" type="button">Get instant reply</button>
+<div id="err"></div>
+<div id="reply"></div>
+<div class="note"><b>What happens next, in one line:</b> your message goes to the AI first responder, you see its reply here straight away, and the job is logged for a tradesperson to confirm. No price in this first reply is final — all prices are subject to on-site inspection.</div>
+
+<details style="margin-top:16px"><summary>Settings (testing only — webhook for this device)</summary>
+<p><small>For the TESTING page only. In the live version this field will not be shown to customers — the webhook will be built in. Saved on this device only.</small></p>
+<label for="wh">Make webhook URL (customer auto-reply scenario)</label>
+<input id="wh" placeholder="Paste the customer auto-reply webhook here">
+<button id="saveBtn" type="button">Save webhook on this device</button>
+<p id="savedMsg"><small></small></p>
+</details>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+$('wh').value=localStorage.getItem('apex_customer_webhook')||'';
+if($('wh').value) $('savedMsg').innerHTML='<small>Saved on this device.</small>';
+$('saveBtn').onclick=()=>{localStorage.setItem('apex_customer_webhook',$('wh').value.trim());$('savedMsg').innerHTML='<small>Saved on this device.</small>';};
+$('sendBtn').onclick=async()=>{
+  const wh=localStorage.getItem('apex_customer_webhook')||'';
+  const err=$('err'),rep=$('reply');
+  err.style.display='none';rep.style.display='none';
+  if(!wh){err.textContent='No webhook URL entered — paste it in Settings first (testing only).';err.style.display='block';return;}
+  if(!$('cjob').value.trim()){err.textContent='Please describe the problem first.';err.style.display='block';return;}
+  $('sendBtn').disabled=true;$('sendBtn').textContent='Getting your reply…';
+  const payload={Customer_Name:$('cname').value.trim(),Phone:$('cphone').value.trim(),Email:$('cemail').value.trim(),Trade:$('ctrade').value,Customer_Location:$('cloc').value.trim(),Job_Description:$('cjob').value.trim(),source:'apex_customer_intake_v1'};
+  try{
+    const res=await fetch(wh,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const txt=await res.text();
+    let out=txt;
+    try{const j=JSON.parse(txt);out=j.customer_facing_reply||j.AI_Quote||j.reply||j.message||txt;}catch(e){}
+    rep.textContent=out;rep.style.display='block';
+  }catch(e){
+    err.textContent='Could not reach the reply service. Check the webhook in Settings and try again. If you smell gas, call 0800 111 999 now.';err.style.display='block';
+  }
+  $('sendBtn').disabled=false;$('sendBtn').textContent='Get instant reply';
+};
+</script>
+</body></html>
