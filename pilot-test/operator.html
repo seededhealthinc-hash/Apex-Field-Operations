@@ -9,7 +9,7 @@
 html,body{margin:0;padding:0}
 body{background:#020617;color:#f1f5f9;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;padding-bottom:96px;font-size:16px;line-height:1.5}
 a,button{font:inherit}
-header.site{position:sticky;top:0;z-index:2000;background:rgba(2,6,23,.92);border-bottom:1px solid #1e293b;padding:12px 16px}
+header.site{position:sticky;top:0;z-index:2000;background:#020617;border-bottom:1px solid #1e293b;padding:12px 16px}
 .wrap{max-width:512px;margin:0 auto}
 .hrow{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{display:flex;align-items:center;gap:12px}
@@ -45,9 +45,12 @@ textarea{resize:none;line-height:1.6}
 .banner-info{background:rgba(249,115,22,.1);color:#fdba74;border-color:rgba(249,115,22,.25)}
 #map{height:320px;position:relative;z-index:1;}
 .leaflet-pane,.leaflet-control{z-index:10!important;}
-.leaflet-top,.leaflet-bottom{z-index:10!important;}border-radius:8px;border:1px solid #1e293b;background:#020617}
+.leaflet-top,.leaflet-bottom{z-index:10!important;}
+.leaflet-popup-content-wrapper{max-width:280px!important;}
+.leaflet-popup-content{max-width:240px!important;margin:12px 14px!important;word-wrap:break-word;white-space:normal;}
+.leaflet-popup-tip-container{width:20px;height:12px;}border-radius:8px;border:1px solid #1e293b;background:#020617}
 .mapfallback{border:1px dashed #334155;border-radius:8px;padding:16px;background:#020617}
-nav.bottom{position:fixed;bottom:0;left:0;right:0;z-index:2000;background:rgba(15,23,42,.95);border-top:1px solid #1e293b}
+nav.bottom{position:fixed;bottom:0;left:0;right:0;z-index:2000;background:#0f172a;border-top:1px solid #1e293b}
 nav.bottom .wrap{display:grid;grid-template-columns:repeat(4,1fr);height:64px}
 .nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;background:none;border:0;color:#94a3b8;cursor:pointer;min-height:48px;font-size:10px;font-weight:600;letter-spacing:.05em}
 .nav-btn.active{color:#f97316}
@@ -152,7 +155,7 @@ function updateRouteForCurrentJob() {
   var f = FIXTURES[key]; currentJob = { address: address, lat: f.lat, lon: f.lon };
   labelEl.textContent = f.label; detailsEl.textContent = 'Pilot pin only — synthetic fixture at 51.505, -0.09. Not routing, not an ETA, not a real job location.';
   if (map && typeof L !== 'undefined') {
-    try { map.setView([f.lat, f.lon], 15); if (currentMarker) map.removeLayer(currentMarker); var el = document.createElement('div'); el.textContent = f.label; currentMarker = L.marker([f.lat, f.lon]).addTo(map).bindPopup(el).openPopup(); } catch(e) { showFallbackPin(f.label, 'Map library error — pin shown as text only.'); }
+    try { map.setView([f.lat, f.lon], 15); if (currentMarker) map.removeLayer(currentMarker); var el = document.createElement('div'); el.textContent = f.label; currentMarker = L.marker([f.lat, f.lon]).addTo(map).bindPopup(el,{maxWidth:260}).openPopup(); } catch(e) { showFallbackPin(f.label, 'Map library error — pin shown as text only.'); }
   } else { showFallbackPin(f.label, 'Map library unavailable — pin shown as text only.'); }
 }
 document.getElementById('siteAddress').addEventListener('change', function(e) { currentJob = { address: e.target.value.trim(), lat: null, lon: null }; });
