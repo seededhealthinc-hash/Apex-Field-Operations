@@ -1,0 +1,1 @@
+{"description":"Apex Field Operations production server (local build only). No payment code, no Stripe code, no keys.","engines":{"node":">=20"},"main":"server.js","name":"apex-production-server","private":true,"scripts":{"start":"node server.js"},"version":"1.0.0"}
