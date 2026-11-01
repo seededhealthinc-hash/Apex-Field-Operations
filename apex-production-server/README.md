@@ -8,9 +8,9 @@ desk (the desk creates the Render service itself; no Render login or key is
 needed by the builder). GitHub Pages cannot receive payment messages, which
 is why a server is needed.
 
-This build is **local only**. It is **not** a live production deployment,
-no GitHub repo has been created, nothing has been pushed or deployed, and
-nothing has been sent to the desk.
+This code is now pushed to GitHub (see below). It is **not** a live
+production deployment: nothing has been deployed to Render, and nothing
+has been sent to the desk yet.
 
 ## What this server is NOT
 
@@ -102,7 +102,8 @@ Node v24.22.1 (tested locally, 1 November 2026).
 
 ## Exact details the owner will later send to the desk
 
-> - Repo name and branch: TBD — no GitHub repo has been created yet for this server. When created, it will be a repo under `seededhealthinc-hash`, deploying from `main`.
+> - Repo name and branch: `seededhealthinc-hash/Apex-Field-Operations`, branch `main`, root directory `apex-production-server` (the server code lives in that folder, alongside the existing Pages demo at the repo root — the demo is unchanged).
+> - Live address: TBD — the desk creates the Render service and gives the live address. The payment-message address will then be `https://<live-address>/webhooks/levyloom`, and the success and cancel page addresses will be `https://<live-address>/success` and `https://<live-address>/cancel`.
 > - Build command: none (no dependencies, no build step).
 > - Start command: `node server.js` (equivalently `npm start`).
 > - Runtime version: Node v24.22.1.
@@ -114,8 +115,8 @@ Node v24.22.1 (tested locally, 1 November 2026).
 
 ## What is still blocked / not done
 
-- No GitHub repo created, nothing pushed, nothing deployed to Render.
+- Code pushed to GitHub (commit 03d374c5f631bba697c73b477d2da1d85183f135, plus this README update). Nothing deployed to Render yet.
 - No payment code, no Stripe work, and no integration playbook — the
   webhook route stays empty until the playbook arrives.
-- No owner message has been sent to the desk. The owner-details section
-  above is ready for the owner to review and send when the repo exists.
+- No owner message has been sent to the desk yet. The owner-details section
+  above is ready to send, with the repo, branch, root directory, commands, runtime, stateless design, env var names, and clientReferenceId field.
