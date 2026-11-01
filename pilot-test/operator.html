@@ -107,7 +107,7 @@ nav.bottom .wrap{display:grid;grid-template-columns:repeat(4,1fr);height:64px}
 <div class="field"><label class="lbl" for="settingRate">Standard Hourly Rate (£/hr)</label><input type="number" id="settingRate" value="65.00"></div>
 <div class="field"><label class="lbl" for="settingCallout">Emergency / Callout Fee (£)</label><input type="number" id="settingCallout" value="95.00"></div>
 <div class="field"><label class="lbl" for="settingMarkup">Material Markup (%)</label><input type="number" id="settingMarkup" value="20"></div>
-<div class="field"><label class="lbl" for="settingWebhook">Make.com Webhook URL</label><input type="text" id="settingWebhook" placeholder="Paste your Make webhook URL here — it is not hard-coded in this file"></div>
+<div class="field"><label class="lbl" for="settingWebhook">Make.com Webhook URL</label><input type="text" id="settingWebhook" placeholder="Paste webhook URL here — it is not hard-coded in this file"></div>
 <button type="button" id="saveSettingsBtn" class="btn2">SAVE CONFIGURATION (on this device only)</button>
 <p id="settingsSaved" class="hidden small" style="color:#34d399">Saved on this device.</p>
 <p class="muted">Demo defaults only (£65 / £95 / 20%) — replace with the tradesperson's own rates before any priced quote. Testing-only: this webhook address is stored on this device only (localStorage). It is not secret storage or access control. Production builds must use a server/proxy holding the webhook in backend secrets.</p>
