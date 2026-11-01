@@ -117,5 +117,4 @@ $('sendBtn').onclick=async()=>{
     showErr('Could not get a first reply: '+msg+' Check the webhook in Settings and try again. If you smell gas, call 0800 111 999 now.');
   } finally { clearTimeout(timer); $('sendBtn').disabled=false;$('sendBtn').textContent='Get first reply'; }
 };
-$('callInsteadBtn').onclick=()=>{ const p=$('callPanel'); p.style.display=(p.style.display==='block')?'none':'block'; };
 </script></body></html>
