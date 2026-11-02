@@ -11,7 +11,8 @@
 //     to call anything — the gateway identifies the merchant from the API
 //     key), LEVY_LOOM_CONNECTED_ACCOUNT_ID, LEVY_LOOM_API_KEY,
 //   LEVY_LOOM_WEBHOOK_SECRET, LEVY_LOOM_CALLBACK_PATH,
-//   LEVY_LOOM_PRICE_SETUP, LEVY_LOOM_PRICE_RETAINER, PUBLIC_BASE_URL
+//   LEVY_LOOM_PRICE_SETUP, LEVY_LOOM_PRICE_RETAINER, PUBLIC_BASE_URL,
+//   MAKE_PAYMENT_WEBHOOK_URL (optional; see below)
 //     (optional override for the public live host; defaults to the Render
 //     address the desk gave, which is public, not a secret).
 //
@@ -19,18 +20,22 @@
 // only to de-duplicate retried callbacks (playbook Part 3). No database,
 // no background jobs, no schedulers, no files written at runtime.
 //
-// GOOGLE SHEET NOTE — read this before calling the Sheet write "done":
-// The desk's Render env list contains Levy & Loom settings only. It does
-// NOT contain any Google Sheets credential, so this server cannot
-// authenticate a Sheets API write on its own, and no credential is
-// invented here. The webhook handler therefore does the verified,
-// auditable part now — signature check, event classification, 2xx fast —
-// and queues the Sheet outcome in memory + console (clientReferenceId,
-// event type, outcome only; no raw body, no personal data beyond the id
-// needed to find the row). A future, separately approved step must supply
-// a Sheets credential to Render (or a Make route the owner approves)
-// before "write to that tradesperson's row" can be executed for real.
-// Until then the Sheet step is explicitly PENDING, not claimed as done.
+// GOOGLE SHEET NOTE — Make route (approved test build, 2026-11-02):
+// The desk's Render env list contains Levy & Loom settings only, so this
+// server does NOT write to Google Sheets directly and no Sheets
+// credential is invented here. Instead, after the Levy & Loom signature
+// is verified on this server, a sanitized packet — event type, outcome
+// and clientReferenceId only, no raw body, no secret, no payment detail
+// — is forwarded to a Make webhook whose URL lives ONLY in the Render
+// environment variable MAKE_PAYMENT_WEBHOOK_URL (name only in code;
+// the value is placed in Render by the desk/owner and is never in this
+// repo, in chat, or in a log line). Make then searches the
+// "Tradespeople" tab of the Trade Quote Engine workbook by
+// clientReferenceId and updates Payment_Status. If that env var is not
+// set, forwarding is skipped and the Sheet step stays pending — the
+// callback is still answered 2xx, and nothing is faked as written.
+// Until a dry run proves a Make update end to end, the Sheet step is
+// explicitly PENDING, not claimed as done.
 
 const http = require('node:http');
 const https = require('node:https');
@@ -304,6 +309,45 @@ async function startPortal(req, res) {
   }
 }
 
+// Forward a sanitized, verified outcome to Make. Fire-and-forget: the
+// Levy & Loom callback must be answered 2xx quickly, so this never
+// blocks the response. The Make webhook URL is never logged, and only
+// the three fields below are sent — never the raw Levy & Loom body, a
+// secret, an email, or a payment detail.
+function forwardToMake(eventType, outcome, clientReferenceId) {
+  const target = process.env.MAKE_PAYMENT_WEBHOOK_URL;
+  if (!target || !clientReferenceId) return false;
+  let url;
+  try {
+    url = new URL(target);
+  } catch (e) {
+    console.log(JSON.stringify({ forward: 'make', status: 'invalid_url_config' }));
+    return false;
+  }
+  const payload = JSON.stringify({ event_type: eventType, outcome, clientReferenceId });
+  const req = https.request(
+    {
+      method: 'POST',
+      hostname: url.hostname,
+      port: url.port || 443,
+      path: url.pathname + url.search,
+      headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(payload) },
+    },
+    (res) => {
+      res.on('data', () => {});
+      res.on('end', () => {
+        console.log(JSON.stringify({ forward: 'make', status: res.statusCode, clientReferenceId, outcome }));
+      });
+    }
+  );
+  req.on('error', () => {
+    console.log(JSON.stringify({ forward: 'make', status: 'error', clientReferenceId, outcome }));
+  });
+  req.write(payload);
+  req.end();
+  return true;
+}
+
 // Map a verified callback to the Apex outcome the owner specified.
 // This function classifies and records; it does NOT grant access from
 // any other source, and it does NOT write to a Sheet by itself — see the
@@ -428,10 +472,11 @@ const server = http.createServer(async (req, res) => {
     const duplicate = markDelivery(deliveryId);
     const classified = classifyCallback(event);
     const clientReferenceId = (event.data && event.data.clientReferenceId) || null;
-    // 2xx quickly, per playbook Part 2.5 (under 10 seconds). The Sheet
-    // outcome is queued for the pending Sheets-credential step — see the
-    // note at the top of this file. Only ids and outcomes are logged,
-    // never the raw body, email, or payment details.
+    // 2xx quickly, per playbook Part 2.5 (under 10 seconds). Forwarding
+    // to Make happens only after signature verification, and only for
+    // non-duplicate events; it never blocks this response. Only ids and
+    // outcomes are logged, never the raw body, email, or payment details.
+    const forwarded = !duplicate && forwardToMake(event.type || null, classified.outcome, clientReferenceId);
     console.log(
       JSON.stringify({
         webhook: 'levyloom',
@@ -441,14 +486,14 @@ const server = http.createServer(async (req, res) => {
         clientReferenceId,
         outcome: classified.outcome,
         grant: classified.grant,
-        sheetWrite: 'pending_sheets_credential',
+        sheetWrite: forwarded ? 'forwarded_to_make' : 'pending_make_webhook_url',
       })
     );
     sendJson(res, 200, {
       ok: true,
       status: duplicate ? 'duplicate_ignored' : 'received',
       outcome: classified.outcome,
-      sheetWrite: 'pending_sheets_credential',
+      sheetWrite: forwarded ? 'forwarded_to_make' : 'pending_make_webhook_url',
     });
     return;
   }

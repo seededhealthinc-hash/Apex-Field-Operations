@@ -24,9 +24,9 @@ Payment path is Levy & Loom ONLY. No Stripe code, no Stripe key, no direct Strip
   - `payment.refunded` / `subscription.refunded` = record it
   - plus `subscription.updated`, `payment_recovered`, `grace_expired`, `paused`, `resumed` for completeness
 
-## Google Sheet write — PENDING, not claimed as done
+## Google Sheet write — Make route, TEST BUILD, not yet proven end to end
 
-The desk's Render env list contains Levy & Loom settings only. It does NOT contain any Google Sheets credential, so this server cannot authenticate a Sheets API write on its own, and no credential is invented here. The webhook handler therefore verifies, classifies, and queues the Sheet outcome (clientReferenceId, event type, outcome only) and reports `sheetWrite: "pending_sheets_credential"`. A future, separately approved step must supply a Sheets credential to Render (or an owner-approved Make route) before "write to that tradesperson's row" can execute for real. Do not present the Sheet step as complete until that credential and a live callback test prove it.
+Approved test build 2026-11-02 (Gemini evaluation confirmed the plan): the server does NOT write to Sheets directly — it contains no Sheets credential and none is invented. After verifying the Levy & Loom signature, it forwards a sanitized packet (event type, outcome, clientReferenceId only) to a Make webhook whose URL lives ONLY in the Render env var `MAKE_PAYMENT_WEBHOOK_URL` (name only in code; value placed in Render by the desk/owner, never in this repo, chat, or logs). Make searches the new "Tradespeople" tab of the Trade Quote Engine workbook by clientReferenceId and updates Payment_Status. Columns: clientReferenceId, Trader_Name, Email, Phone, Payment_Status, Plan_Type, Last_Payment_Date, Date_Created. If `MAKE_PAYMENT_WEBHOOK_URL` is not set, forwarding is skipped and the response reports `sheetWrite: "pending_make_webhook_url"`. Do not present the Sheet step as complete until a dry run proves a Make update end to end, with test data only, no live transactions, and no edits to existing scenarios.
 
 ## Environment variables (NAMES only, never values)
 
