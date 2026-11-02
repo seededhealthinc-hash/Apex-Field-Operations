@@ -1,122 +1,73 @@
-# Apex Field Operations — Production Server (local build only, v1)
+# Apex Field Operations — Production Server, v2 (Levy & Loom)
+
+Live on Render at https://apex-field-operations.onrender.com (free plan, deploys main, root apex-production-server), per the Levy & Loom desk message 2026-11-02. The desk places the settings in Render; this repo contains NAMES only, never values.
 
 ## What this server is
 
-A minimal, real Node server that will later be deployed from `main` in a
-GitHub repo under `seededhealthinc-hash` and run on Render by the Levy & Loom
-desk (the desk creates the Render service itself; no Render login or key is
-needed by the builder). GitHub Pages cannot receive payment messages, which
-is why a server is needed.
+A minimal, real Node server (built-ins only, no dependencies) that runs the Levy & Loom payment flow from the Integration Playbook (Part 2.3 checkout including "One-off payments", Part 2.4 portal, Part 3 webhook dispatch, read 2026-11-02).
 
-This code is now pushed to GitHub (see below). It is **not** a live
-production deployment: nothing has been deployed to Render, and nothing
-has been sent to the desk yet.
-
-## What this server is NOT
-
-- It is not a payment system. There is no payment code, no Stripe code, and
-  no checkout code in this build.
-- It does not take, store, or confirm any payment, and the `/success` page
-  does not, by itself, prove that a payment was taken.
-- It does not collect any customer data.
-- It does not mark anything paid, does not touch any Google Sheet, does not
-  call any external service, and does not verify any signature.
-- It contains no keys and no secrets, and no keys or secrets have been asked
-  for or used.
+Payment path is Levy & Loom ONLY. No Stripe code, no Stripe key, no direct Stripe Payment Links, Checkout Sessions, Subscriptions, Products, Prices or Webhook Endpoints are created here.
 
 ## Routes
 
-- `GET /` — short plain page stating this is the Apex Field Operations
-  production server (demo/status only, no payment, no customer data).
-- `GET /success` — simple success page: "Payment successful. Thank you —
-  your retainer is being set up. A tradesperson account will be confirmed
-  separately." It does not claim a payment was actually taken, and it does
-  not collect any payment details.
-- `GET /cancel` — simple cancel page: "Payment cancelled. Nothing was
-  changed. You can return and try again when ready."
-- `POST /webhooks/levyloom` — an EMPTY handler for now. It accepts the
-  request, logs only that a webhook was received (no body content, no
-  personal data), and returns 200 with a plain JSON acknowledgement stating
-  the handler is not yet implemented and the playbook will fill it in.
-  The Levy & Loom integration playbook has NOT arrived yet, so this route
-  must stay empty until it does.
+- `GET /` — status page.
+- `GET /success` — grants NOTHING. It states plainly that this page alone does not confirm a payment; only a signed callback counts.
+- `GET /cancel` — "Payment cancelled. Nothing was changed."
+- `POST /checkout/setup` — body `{ clientReferenceId, customerEmail?, redirect? }`. Calls Levy & Loom `POST /api/connect/create-charge` with price `LEVY_LOOM_PRICE_SETUP` (£495 one-off, one-time price), callback/success/cancel URLs derived from the public live host + callback path. Returns a 302 to the returned `checkoutUrl`, or JSON with `checkoutUrl` when `redirect: false`. Never sends `allowPromotionCodes` or `trialPeriodDays`.
+- `POST /checkout/retainer` — same call with price `LEVY_LOOM_PRICE_RETAINER` (£79 a month, recurring). Start this only after the setup is paid.
+- `POST /portal` — body `{ customerId, redirect? }` ("Manage my plan"). Calls Levy & Loom `POST /api/connect/portal-session` (Part 2.4) and redirects to the returned URL, or returns it as JSON when `redirect: false`. `customerId` is the one delivered in `subscription.activated`.
+- `POST /webhooks/levyloom` (or the path in `LEVY_LOOM_CALLBACK_PATH`) — reads the raw body, verifies `X-LevyLoom-Signature` with `LEVY_LOOM_WEBHOOK_SECRET` per Part 3.1 (HMAC-SHA256 over `<t>.<raw body>`, multiple `v1` values accepted, 5-minute tolerance, timing-safe compare). Unsigned or wrongly signed requests get 401. Verified events are classified and answered 2xx quickly, with duplicate deliveries de-duplicated on `X-LevyLoom-Delivery`:
+  - `payment.succeeded` = setup paid
+  - `subscription.activated` = retainer active
+  - `subscription.payment_failed` = keep access while `rescue.accessGranted` is true
+  - `subscription.canceled` = retainer ended
+  - `payment.refunded` / `subscription.refunded` = record it
+  - plus `subscription.updated`, `payment_recovered`, `grace_expired`, `paused`, `resumed` for completeness
 
-## Stateless: no database, no background jobs, no schedulers
+## Google Sheet write — PENDING, not claimed as done
 
-This server is stateless. It uses:
+The desk's Render env list contains Levy & Loom settings only. It does NOT contain any Google Sheets credential, so this server cannot authenticate a Sheets API write on its own, and no credential is invented here. The webhook handler therefore verifies, classifies, and queues the Sheet outcome (clientReferenceId, event type, outcome only) and reports `sheetWrite: "pending_sheets_credential"`. A future, separately approved step must supply a Sheets credential to Render (or an owner-approved Make route) before "write to that tradesperson's row" can execute for real. Do not present the Sheet step as complete until that credential and a live callback test prove it.
 
-- No database.
-- No background jobs.
-- No schedulers.
-- No files that must survive a restart. It writes no files at runtime.
+## Environment variables (NAMES only, never values)
 
-On a paid message in future (after the playbook arrives), the design agreed
-with the desk is to mark the tradesperson's row in the existing Google Sheet
-as paid — that lookup and write are **not** implemented in this build.
+- `PORT` — optional, default 3000.
+- `LEVY_LOOM_BASE_URL` — gateway host (playbook BASE, production https://api.levyandloom.com).
+- `LEVY_LOOM_MERCHANT_ID` — accepted for reference; the gateway identifies the merchant from the API key, so no call uses this id directly.
+- `LEVY_LOOM_CONNECTED_ACCOUNT_ID` — the merchant's own connected account, sent on every create-charge call.
+- `LEVY_LOOM_API_KEY` — Bearer token for Levy & Loom calls. Never logged, never returned, never committed.
+- `LEVY_LOOM_WEBHOOK_SECRET` — HMAC secret for callback verification. Never logged, never returned, never committed.
+- `LEVY_LOOM_CALLBACK_PATH` — callback path, `/webhooks/levyloom`.
+- `LEVY_LOOM_PRICE_SETUP` — £495 one-off setup price id.
+- `LEVY_LOOM_PRICE_RETAINER` — £79 a month retainer price id.
+- `PUBLIC_BASE_URL` — optional override for the public live host; defaults to https://apex-field-operations.onrender.com.
 
-## Customer ID field (for later use only)
+If a required Levy & Loom setting is missing, checkout/portal return 503 `payment_not_configured` naming only the missing env var names.
 
-The customer ID field name is `clientReferenceId`. Its value will later be
-the tradesperson's unique row ID in the existing Google Sheet (one per
-tradesperson account). That lookup is **not** implemented in this build, no
-Sheet has been created, and no ID has been hardcoded.
+## Stateless
 
-## Environment variables
+No database, no background jobs, no schedulers, no files written at runtime — except an in-memory, bounded set of processed delivery ids for de-duplication.
 
-There are no required environment variables. The server runs with zero
-required settings.
+## Customer ID field
 
-Full list of environment variable NAMES it will read:
-
-- `PORT` — optional only. The port the server listens on. Default: `3000`
-  when `PORT` is not set. This is a runtime port, not a payment setting.
-- No other environment variables are required, and none are read.
-- The Levy & Loom settings will be defined by the integration playbook when
-  it arrives. No secret names have been invented for them here, and no
-  values are included anywhere in this repo.
+`clientReferenceId` — the tradesperson's unique Sheet row ID (one per tradesperson account). It is echoed in every callback, so no Stripe id mapping is needed.
 
 ## How to run it locally
 
-Build command: none required (no dependencies, no build step).
+Build command: none (no dependencies, no build step).
 
 ```sh
 node server.js
 ```
 
-Or, equivalently:
-
-```sh
-npm start
-```
-
-Then visit `http://localhost:3000/` (or the port set in `PORT`).
+Then visit `http://localhost:3000/`. Without the Levy & Loom env vars, checkout/portal return 503 naming the missing names; the webhook still returns 401 for unsigned requests.
 
 ## Build and start commands
 
-- Build command: none (no dependencies, no build step).
+- Build command: none.
 - Start command: `node server.js` (equivalently `npm start`).
+- Runtime tested: Node v24.22.1.
 
-## Runtime version tested
+## History
 
-Node v24.22.1 (tested locally, 1 November 2026).
-
-## Exact details the owner will later send to the desk
-
-> - Repo name and branch: `seededhealthinc-hash/Apex-Field-Operations`, branch `main`, root directory `apex-production-server` (the server code lives in that folder, alongside the existing Pages demo at the repo root — the demo is unchanged).
-> - Live address: TBD — the desk creates the Render service and gives the live address. The payment-message address will then be `https://<live-address>/webhooks/levyloom`, and the success and cancel page addresses will be `https://<live-address>/success` and `https://<live-address>/cancel`.
-> - Build command: none (no dependencies, no build step).
-> - Start command: `node server.js` (equivalently `npm start`).
-> - Runtime version: Node v24.22.1.
-> - Database: none. The server is stateless and uses no database.
-> - Always-on jobs / schedulers: none.
-> - Files that must survive a restart: none. The server writes no files at runtime.
-> - Environment variable NAMES: `PORT` (optional only, default 3000). No other environment variables are required, and no Levy & Loom setting names have been invented — the integration playbook will define them when it arrives. No values are included.
-> - Customer ID field: `clientReferenceId` — whose value will later be the tradesperson's unique row ID in the existing Google Sheet (one per tradesperson account). Not implemented in this build.
-
-## What is still blocked / not done
-
-- Code pushed to GitHub (commit 03d374c5f631bba697c73b477d2da1d85183f135, plus this README update). Nothing deployed to Render yet.
-- No payment code, no Stripe work, and no integration playbook — the
-  webhook route stays empty until the playbook arrives.
-- No owner message has been sent to the desk yet. The owner-details section
-  above is ready to send, with the repo, branch, root directory, commands, runtime, stateless design, env var names, and clientReferenceId field.
+- v1 (2026-11-01): status/success/cancel pages + empty webhook handler, pushed to GitHub in the existing Apex-Field-Operations repo under `apex-production-server/`. No payment code until the playbook arrived.
+- v2 (2026-11-02): playbook applied — checkout (setup + retainer), signed webhook, portal. Live Render address supplied by the desk 2026-11-02. Sheet write remains pending for the reason above.
