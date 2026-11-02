@@ -40,6 +40,8 @@ Approved test build 2026-11-02 (Gemini evaluation confirmed the plan): the serve
 - `LEVY_LOOM_PRICE_SETUP` — £495 one-off setup price id.
 - `LEVY_LOOM_PRICE_RETAINER` — £79 a month retainer price id.
 - `PUBLIC_BASE_URL` — optional override for the public live host; defaults to https://apex-field-operations.onrender.com.
+- `MAKE_PAYMENT_WEBHOOK_URL` — Render-only setting (set by the desk 2026-11-02, value never in this repo). When present, verified payment outcomes are forwarded to the Make payment scenario; when absent, forwarding is skipped.
+- `MAKE_PAYMENT_WEBHOOK_KEY` — Render-only setting, added by the desk before go-live. When present, it is sent as the `x-make-apikey` header to the Make webhook; when absent, no key header is sent. Value never in this repo, chat, or logs.
 
 If a required Levy & Loom setting is missing, checkout/portal return 503 `payment_not_configured` naming only the missing env var names.
 

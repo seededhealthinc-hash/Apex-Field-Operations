@@ -12,7 +12,9 @@
 //     key), LEVY_LOOM_CONNECTED_ACCOUNT_ID, LEVY_LOOM_API_KEY,
 //   LEVY_LOOM_WEBHOOK_SECRET, LEVY_LOOM_CALLBACK_PATH,
 //   LEVY_LOOM_PRICE_SETUP, LEVY_LOOM_PRICE_RETAINER, PUBLIC_BASE_URL,
-//   MAKE_PAYMENT_WEBHOOK_URL (optional; see below)
+//   MAKE_PAYMENT_WEBHOOK_URL (optional; see below),
+//   MAKE_PAYMENT_WEBHOOK_KEY (optional, added by the desk before
+//     go-live; sent as x-make-apikey only when present)
 //     (optional override for the public live host; defaults to the Render
 //     address the desk gave, which is public, not a secret).
 //
@@ -325,13 +327,21 @@ function forwardToMake(eventType, outcome, clientReferenceId) {
     return false;
   }
   const payload = JSON.stringify({ event_type: eventType, outcome, clientReferenceId });
+  const headers = { 'content-type': 'application/json', 'content-length': Buffer.byteLength(payload) };
+  // Before go-live the desk adds an API key to the Make webhook and
+  // places it in Render as MAKE_PAYMENT_WEBHOOK_KEY. Send it as
+  // x-make-apikey ONLY when that variable is present; otherwise send
+  // no key header at all. The key value is never logged.
+  if (process.env.MAKE_PAYMENT_WEBHOOK_KEY) {
+    headers['x-make-apikey'] = process.env.MAKE_PAYMENT_WEBHOOK_KEY;
+  }
   const req = https.request(
     {
       method: 'POST',
       hostname: url.hostname,
       port: url.port || 443,
       path: url.pathname + url.search,
-      headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(payload) },
+      headers,
     },
     (res) => {
       res.on('data', () => {});
