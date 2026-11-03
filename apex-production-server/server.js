@@ -14,7 +14,9 @@
 //   LEVY_LOOM_PRICE_SETUP, LEVY_LOOM_PRICE_RETAINER, PUBLIC_BASE_URL,
 //   MAKE_PAYMENT_WEBHOOK_URL (optional; see below),
 //   MAKE_PAYMENT_WEBHOOK_KEY (optional, added by the desk before
-//     go-live; sent as x-make-apikey only when present)
+//     go-live; sent as x-make-apikey AND as payload field 'auth'
+//     when present, because Make masks the header as '***' and
+//     the scenario cannot check it. The key value is never logged.)
 //     (optional override for the public live host; defaults to the Render
 //     address the desk gave, which is public, not a secret).
 //
@@ -326,12 +328,17 @@ function forwardToMake(eventType, outcome, clientReferenceId) {
     console.log(JSON.stringify({ forward: 'make', status: 'invalid_url_config' }));
     return false;
   }
-  const payload = JSON.stringify({ event_type: eventType, outcome, clientReferenceId });
+  const packet = { event_type: eventType, outcome, clientReferenceId };
+  // Make masks the x-make-apikey header, so also carry the key in the
+  // payload as 'auth' when present. The payload itself is never logged.
+  if (process.env.MAKE_PAYMENT_WEBHOOK_KEY) {
+    packet.auth = process.env.MAKE_PAYMENT_WEBHOOK_KEY;
+  }
+  const payload = JSON.stringify(packet);
   const headers = { 'content-type': 'application/json', 'content-length': Buffer.byteLength(payload) };
-  // Before go-live the desk adds an API key to the Make webhook and
-  // places it in Render as MAKE_PAYMENT_WEBHOOK_KEY. Send it as
-  // x-make-apikey ONLY when that variable is present; otherwise send
-  // no key header at all. The key value is never logged.
+  // Keep sending the header too, as before, ONLY when that variable
+  // is present; otherwise send no key header and no 'auth' field.
+  // The key value is never logged.
   if (process.env.MAKE_PAYMENT_WEBHOOK_KEY) {
     headers['x-make-apikey'] = process.env.MAKE_PAYMENT_WEBHOOK_KEY;
   }
