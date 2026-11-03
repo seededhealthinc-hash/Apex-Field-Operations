@@ -43,6 +43,8 @@ textarea{resize:none;line-height:1.6}
 .banner-ok{background:rgba(16,185,129,.1);color:#34d399;border-color:rgba(16,185,129,.2)}
 .banner-err{background:rgba(244,63,94,.1);color:#fda4af;border-color:rgba(244,63,94,.2)}
 .banner-info{background:rgba(249,115,22,.1);color:#fdba74;border-color:rgba(249,115,22,.25)}
+#offlineBanner{display:none;position:sticky;top:0;z-index:2001;background:#ffeb00;color:#000;border:4px solid #000;border-radius:12px;padding:16px;margin:0 0 16px;font-size:18px;font-weight:800;line-height:1.4}
+#offlineBanner small{display:block;font-size:16px;font-weight:700;margin-top:4px;color:#000}
 #map{height:320px;position:relative;z-index:1;}
 .leaflet-pane,.leaflet-control{z-index:10!important;}
 .leaflet-top,.leaflet-bottom{z-index:10!important;}
@@ -67,6 +69,7 @@ nav.bottom .wrap{display:grid;grid-template-columns:repeat(4,1fr);height:64px}
 </div></div></header>
 <main>
 <section id="view-intake">
+<div id="offlineBanner" role="alert" aria-live="assertive" style="display:none">⚠ Connection lost — you are offline.<small>Nothing was sent and no quote was dispatched. Your job details are still here. Try again when your signal returns. If you smell gas, call 0800 111 999 now, from outside.</small></div>
 <form id="intakeForm">
 <div class="field"><label class="lbl" for="tradeType">Trade Category</label>
 <select id="tradeType"><option value="Plumbing">Plumbing &amp; Heating</option><option value="Electrical">Electrical</option><option value="HVAC">HVAC &amp; Climate</option><option value="Carpentry">Carpentry &amp; Joinery</option><option value="General">General Maintenance / Handyman</option></select></div>
@@ -103,14 +106,29 @@ nav.bottom .wrap{display:grid;grid-template-columns:repeat(4,1fr);height:64px}
 <p id="route-details" class="small">Pilot map: a pin only, not routing and not an ETA. Map tiles are optional — if the map library fails to load, the pin is shown as text and tabs still work. No real job address is sent to any geocoder in this pilot. Only the exact fixture text “PILOT FIXTURE” plots a synthetic pin. Any other address plots no pin.</p></div>
 </section>
 <section id="view-settings" class="hidden">
-<div class="card"><h2>Trade Rate Card Presets</h2>
-<div class="field"><label class="lbl" for="settingRate">Standard Hourly Rate (£/hr)</label><input type="number" id="settingRate" value="65.00"></div>
-<div class="field"><label class="lbl" for="settingCallout">Emergency / Callout Fee (£)</label><input type="number" id="settingCallout" value="95.00"></div>
-<div class="field"><label class="lbl" for="settingMarkup">Material Markup (%)</label><input type="number" id="settingMarkup" value="20"></div>
+<div class="card"><h2>DRAFT — Tradesperson Rate Card (starts EMPTY)</h2>
+<p class="small2" style="color:#fdba74">MERGED PILOT-TEST DRAFT 2026-11-03 — pilot-test only, NOT the live demo. This card starts EMPTY. A blank field means NO price is quoted for that item — demo defaults are NOT a rate card and must never be used as one. Production parameters must live in a backend store per tradesperson, NOT in device-only localStorage; localStorage here is draft-only.</p>
+<div class="field"><label class="lbl" for="settingRate">Standard Hourly Rate (£/hr) — leave blank if not set</label><input type="number" id="settingRate" placeholder="Tradesperson’s own rate — blank = no price quoted"></div>
+<div class="field"><label class="lbl" for="settingCallout">Callout / Diagnostic Fee (£) — leave blank if not set</label><input type="number" id="settingCallout" placeholder="Tradesperson’s own fee — blank = no price quoted"></div>
+<div class="field"><label class="lbl" for="settingCalloutPayable">Callout payable even if repair is not done?</label><select id="settingCalloutPayable"><option value="">Not set</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+<div class="field"><label class="lbl" for="settingFirstHour">First-Hour Fee (£) — leave blank if not set</label><input type="number" id="settingFirstHour" placeholder="Tradesperson’s own fee"></div>
+<div class="field"><label class="lbl" for="settingEmergency">Emergency Surcharge (£) — leave blank if none</label><input type="number" id="settingEmergency" placeholder="Tradesperson’s own surcharge, or blank"></div>
+<div class="field"><label class="lbl" for="settingMarkup">Parts Policy — markup (%) OR “included”</label><input type="number" id="settingMarkup" placeholder="Tradesperson’s own % — blank = not set"></div>
+<div class="field"><label class="lbl" for="settingPartsIncluded">Parts included in fixed prices?</label><select id="settingPartsIncluded"><option value="">Not set</option><option value="yes">Yes — parts included</option><option value="no">No — parts at cost + markup above</option></select></div>
+<div class="field"><label class="lbl" for="fixedJobs">Fixed-Price Jobs (plumbing / heating first) — one per line, “Job name = £price”. Tradesperson’s own list only; examples in help text are NOT prices.</label><textarea id="fixedJobs" rows="4" placeholder="Example label only — type the tradesperson’s own jobs and prices, or leave blank"></textarea></div>
+<div class="field"><label class="lbl" for="settingTowns">Service Towns / Postcode Areas (one per line) — customer picks from this list in production; no real address is sent to a geocoder</label><textarea id="settingTowns" rows="3" placeholder="e.g. Hammersmith, Fulham"></textarea></div>
+<div class="field"><label class="lbl" for="settingRadius">Service Radius (miles) — optional, only if the tradesperson prefers radius over town list</label><input type="number" id="settingRadius" placeholder="Blank = town list controls"></div>
+<div class="field"><label class="lbl" for="settingHours">Working Days / Hours</label><input type="text" id="settingHours" placeholder="e.g. Mon–Fri 08:00–17:30"></div>
+<div class="field"><label class="lbl" for="settingGap">Gap Between Bookings (minutes, for travel)</label><select id="settingGap"><option value="">Not set</option><option value="30">30</option><option value="45">45</option><option value="60">60</option></select></div>
+<div class="field"><label class="lbl" for="settingMaxJobs">Max Jobs Per Day</label><input type="number" id="settingMaxJobs" placeholder="Tradesperson’s own cap — blank = not set"></div>
+<div class="field"><label class="lbl" for="settingToggle">Auto-Confirm Bookings Toggle (per tradesperson, DEFAULT OFF)</label><select id="settingToggle"><option value="off">OFF — provisional hold only (default)</option><option value="on">ON — auto-confirm fixed rate-card prices only, where all gates pass</option></select></div>
+<p class="muted">Toggle ON never confirms a variable repair price, never confirms outside working hours, outside the service area, or without capacity. Any failed gate falls back to a provisional hold, and the price stays Pending Review.</p>
+<button type="button" id="draftDecisionBtn" class="btn2">PREVIEW DRAFT DECISION (sends nothing)</button>
+<p id="draftDecisionOutOp" class="small2"></p>
 <div class="field"><label class="lbl" for="settingWebhook">Make.com Webhook URL</label><input type="text" id="settingWebhook" placeholder="Paste webhook URL"></div>
 <button type="button" id="saveSettingsBtn" class="btn2">SAVE CONFIGURATION (on this device only)</button>
 <p id="settingsSaved" class="hidden small" style="color:#34d399">Saved on this device.</p>
-<p class="muted">Demo defaults only (£65 / £95 / 20%) — replace with the tradesperson's own rates before any priced quote. Testing-only: this webhook address is stored on this device only (localStorage). It is not secret storage or access control. Production builds must use a server/proxy holding the webhook in backend secrets.</p>
+<p class="muted">DRAFT: there are NO demo defaults in this draft — every rate field starts blank, and blank means no price quoted. Testing-only: settings are stored on this device only (localStorage). That is NOT the production store and NOT access control. Production builds must use a backend store per tradesperson, with the webhook held in backend secrets.</p>
 </div>
 </section>
 </main>
@@ -176,23 +194,145 @@ function buildPayload() {
   return { source: "apex_merged_intake_v1", trade: trade, job_notes: notes, job_location: location, photo_filename: photoName, status: "Pending Review", Review_Status: "Pending Review", Job_Description: notes, Customer_Location: location, Trade: trade, Start_Time: (function(){ var v=document.getElementById('appointmentTime').value; return v ? (v.length===16 ? v+':00' : v) : ''; })(), timestamp: new Date().toISOString(), client_name: document.getElementById('clientName').value.trim(), client_phone: document.getElementById('clientPhone').value.trim(), site_address: location, rates: { hourly: document.getElementById('settingRate').value, callout: document.getElementById('settingCallout').value, markup_percent: document.getElementById('settingMarkup').value } };
 }
 try { var saved = JSON.parse(localStorage.getItem('apex_settings') || '{}'); if (saved.rate) document.getElementById('settingRate').value = saved.rate; if (saved.callout) document.getElementById('settingCallout').value = saved.callout; if (saved.markup) document.getElementById('settingMarkup').value = saved.markup; if (saved.webhook) document.getElementById('settingWebhook').value = saved.webhook; } catch (e) {}
-document.getElementById('saveSettingsBtn').addEventListener('click', function() { try { localStorage.setItem('apex_settings', JSON.stringify({ rate: document.getElementById('settingRate').value, callout: document.getElementById('settingCallout').value, markup: document.getElementById('settingMarkup').value, webhook: document.getElementById('settingWebhook').value.trim() })); document.getElementById('settingsSaved').classList.remove('hidden'); } catch (e) { alert('Could not save on this device.'); } });
+try { var s2 = JSON.parse(localStorage.getItem('apex_settings') || '{}'); ['settingFirstHour','settingEmergency','settingCalloutPayable','settingPartsIncluded','fixedJobs','settingTowns','settingRadius','settingHours','settingGap','settingMaxJobs','settingToggle'].forEach(function(id){ if (s2[id] !== undefined && document.getElementById(id)) document.getElementById(id).value = s2[id]; }); } catch (e) {}
+// Apex Field Operations — Rate card + provisional hold decision logic
+// DRAFT ONLY, 2026-11-03. Merged pilot-test draft 2026-11-03 — pilot-test only, NOT the live demo.
+// No webhook URLs, no secrets, no keys, no payment code in this file.
+// The same function text is embedded in the draft customer.html and
+// operator.html in this folder so each page works standalone.
+//
+// GOVERNING RULES (from the 2026-11-01 design draft + 2026-11-02 support outline):
+//  - Quote ONLY from the tradesperson's own rate card. A blank card quotes nothing.
+//  - Default toggle state: OFF. The tradesperson turns auto-confirm on themselves.
+//  - Toggle OFF  -> provisional hold, never a confirmed booking, price Pending Review.
+//  - Toggle ON   -> confirm ONLY when ALL gates pass: fixed rate-card price,
+//    within working hours, inside service area, capacity available.
+//    Any gate failing -> fall back to provisional hold, with the failed gates listed.
+//  - Never invent a variable repair price. Never confirm blind.
+//  - Spend cap: if an estimate exceeds the customer's cap, stop at the cap and
+//    ask for a fresh yes. Do not surprise the customer with a larger bill.
+
+(function (root) {
+  'use strict';
+
+  // input: {
+  //   autoConfirmOn: boolean,           // tradesperson toggle, default false
+  //   priceSource: 'rate_card' | 'none' | 'variable',
+  //   fixedPrice: number | null,       // only meaningful when priceSource === 'rate_card'
+  //   withinWorkingHours: boolean,
+  //   insideServiceArea: boolean,
+  //   capacityAvailable: boolean
+  // }
+  // output: { outcome, bookingStatus, customerWording, failedGates: [] }
+  //   outcome: 'CONFIRMED_FIXED' | 'PROVISIONAL_HOLD' | 'PENDING_REVIEW_VARIABLE'
+  function decideBooking(input) {
+    var inp = input || {};
+    var failedGates = [];
+    if (inp.priceSource !== 'rate_card' || inp.fixedPrice === null || inp.fixedPrice === undefined) {
+      failedGates.push('no_fixed_rate_card_price');
+    }
+    if (!inp.withinWorkingHours) failedGates.push('outside_working_hours');
+    if (!inp.insideServiceArea) failedGates.push('outside_service_area');
+    if (!inp.capacityAvailable) failedGates.push('no_capacity');
+
+    if (!inp.autoConfirmOn) {
+      return {
+        outcome: 'PROVISIONAL_HOLD',
+        bookingStatus: 'Pending Review',
+        customerWording: "We've held a slot provisionally for you. A tradesperson will confirm it, or offer the next slot, if they can't make it. No firm price yet — that comes after inspection / review.",
+        failedGates: failedGates,
+        toggleState: 'OFF'
+      };
+    }
+
+    // Toggle ON: confirm only if every gate passes.
+    if (failedGates.length === 0) {
+      return {
+        outcome: 'CONFIRMED_FIXED',
+        bookingStatus: 'Confirmed (fixed rate-card price)',
+        customerWording: 'Confirmed at the fixed rate-card price. The tradesperson will attend at the held time.',
+        failedGates: [],
+        toggleState: 'ON'
+      };
+    }
+
+    // Toggle ON but a gate failed: fall back, never confirm blind.
+    // Variable / missing price is Pending Review on price, with a provisional slot.
+    // Missing fixed price is always a price Pending Review, whatever the
+    // source claimed — a slot may be held, but no price is confirmed.
+    var outcome = failedGates.indexOf('no_fixed_rate_card_price') !== -1
+      ? 'PENDING_REVIEW_VARIABLE'
+      : 'PROVISIONAL_HOLD';
+    return {
+      outcome: outcome,
+      bookingStatus: 'Pending Review',
+      customerWording: "We've held a slot provisionally for you. A tradesperson will confirm it, or offer the next slot, if they can't make it. No firm price yet — that comes after inspection / review.",
+      failedGates: failedGates,
+      toggleState: 'ON (gate failed, fell back)'
+    };
+  }
+
+  // spend cap: { estimate: number|null, cap: number|null }
+  // Returns { action: 'WITHIN_CAP' | 'STOP_AT_CAP' | 'NO_CAP_SET', wording }
+  function checkSpendCap(estimate, cap) {
+    if (cap === null || cap === undefined || cap === '') {
+      return { action: 'NO_CAP_SET', wording: 'No spend cap was set for this job.' };
+    }
+    if (estimate === null || estimate === undefined) {
+      return { action: 'NO_CAP_SET', wording: 'No estimate to check against the cap yet — price is Pending Review.' };
+    }
+    if (estimate > cap) {
+      return {
+        action: 'STOP_AT_CAP',
+        wording: 'This job has gone beyond your spend cap of £' + cap + '. The tradesperson will stop and ask for your fresh approval before proceeding further.'
+      };
+    }
+    return { action: 'WITHIN_CAP', wording: 'Estimate £' + estimate + ' is within your spend cap of £' + cap + '.' };
+  }
+
+  root.ApexRateCardDecision = { decideBooking: decideBooking, checkSpendCap: checkSpendCap };
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = root.ApexRateCardDecision;
+  }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+document.getElementById('draftDecisionBtn').addEventListener('click', function() {
+  var jobs=(document.getElementById('fixedJobs').value||'').trim();
+  var hasFixed = jobs.length>0;
+  var res=window.ApexRateCardDecision.decideBooking({autoConfirmOn:document.getElementById('settingToggle').value==='on',priceSource:hasFixed?'rate_card':'none',fixedPrice:hasFixed?0:null,withinWorkingHours:true,insideServiceArea:true,capacityAvailable:true});
+  document.getElementById('draftDecisionOutOp').textContent='DRAFT outcome (all other gates assumed passed for this preview): '+res.outcome+' — '+res.customerWording+' Note: a real decision also checks working hours, service area and capacity; any failure falls back to a provisional hold.';
+});
+document.getElementById('saveSettingsBtn').addEventListener('click', function() { try { localStorage.setItem('apex_settings', JSON.stringify({ rate: document.getElementById('settingRate').value, callout: document.getElementById('settingCallout').value, markup: document.getElementById('settingMarkup').value, webhook: document.getElementById('settingWebhook').value.trim(), settingFirstHour: document.getElementById('settingFirstHour').value, settingEmergency: document.getElementById('settingEmergency').value, settingCalloutPayable: document.getElementById('settingCalloutPayable').value, settingPartsIncluded: document.getElementById('settingPartsIncluded').value, fixedJobs: document.getElementById('fixedJobs').value, settingTowns: document.getElementById('settingTowns').value, settingRadius: document.getElementById('settingRadius').value, settingHours: document.getElementById('settingHours').value, settingGap: document.getElementById('settingGap').value, settingMaxJobs: document.getElementById('settingMaxJobs').value, settingToggle: document.getElementById('settingToggle').value })); document.getElementById('settingsSaved').classList.remove('hidden'); } catch (e) { alert('Could not save on this device.'); } });
 var intakeForm = document.getElementById('intakeForm'); var submitBtn = document.getElementById('submitBtn'); var btnText = document.getElementById('btnText'); var statusBanner = document.getElementById('statusBanner');
+/* OFFLINE BANNER (draft 2026-11-03) — no auto-resend, no spoken errors.
+   Pre-send offline check blocks the fetch entirely, so nothing is sent.
+   An in-flight drop aborts the request; the button is re-enabled only
+   after the request settles, so a retry is one fresh attempt, never a
+   second send running alongside the first. */
+var apexSending = false, apexInFlightController = null;
+function showOfflineBanner() { var b = document.getElementById('offlineBanner'); if (b) b.style.display = 'block'; }
+function hideOfflineBanner() { var b = document.getElementById('offlineBanner'); if (b) b.style.display = 'none'; }
+function apexHandleOffline() { showOfflineBanner(); if (apexInFlightController) { try { apexInFlightController.abort(); } catch (e) {} } }
+window.addEventListener('offline', apexHandleOffline);
+window.addEventListener('online', hideOfflineBanner);
+if (typeof navigator !== 'undefined' && navigator.onLine === false) { showOfflineBanner(); }
 function showBanner(kind, text) { statusBanner.className = 'banner show banner-' + kind; statusBanner.textContent = text; }
 intakeForm.addEventListener('submit', async function(e) {
-  e.preventDefault(); stopMic();
+  e.preventDefault(); if (apexSending) return; /* double-send guard: one submission at a time */
+  stopMic();
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) { showOfflineBanner(); showBanner('err', 'Connection lost — you are offline. Nothing was sent and no quote was dispatched. Try again when your signal returns.'); return; }
   var apptVal = document.getElementById('appointmentTime').value;
   if (!apptVal) { showBanner('err', 'Pick an appointment time first — Make needs a Start_Time for the Calendar event.'); return; }
   var webhookUrl = document.getElementById('settingWebhook').value.trim();
   if (!webhookUrl) { showBanner('err', 'No webhook URL entered — paste it in Settings first. That is Step 2, not a Step 1 failure.'); return; }
-  submitBtn.disabled = true; btnText.textContent = "PARSING WITH AI..."; statusBanner.classList.remove('show');
-  var controller = new AbortController(); var timer = setTimeout(function(){ try{ controller.abort(); }catch(e){} }, 120000);
+  apexSending = true; submitBtn.disabled = true; btnText.textContent = "PARSING WITH AI..."; statusBanner.classList.remove('show');
+  var controller = new AbortController(); apexInFlightController = controller; var timer = setTimeout(function(){ try{ controller.abort(); }catch(e){} }, 120000);
   try {
     var response = await fetch(webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildPayload()), signal: controller.signal });
     if (!response.ok) throw new Error("HTTP " + response.status);
     showBanner('ok', 'Dispatched! Logged as Pending Review — check Make and Sheets next. Approval, if given, happens in the backend, not in this pilot page.');
-  } catch (err) { showBanner('err', 'Failed to trigger webhook: ' + (err.name === 'AbortError' ? 'Timed out after 120 seconds' : err.message) + '. Check the URL in Settings.'); }
-  finally { clearTimeout(timer); submitBtn.disabled = false; btnText.textContent = "SEND TO QUOTE ENGINE"; }
+  } catch (err) { if (err.name === 'AbortError' || err instanceof TypeError || /network|failed to fetch/i.test(err.message || '')) { showOfflineBanner(); } showBanner('err', 'Failed to trigger webhook: ' + (err.name === 'AbortError' ? 'Timed out after 120 seconds' : err.message) + '. Check the URL in Settings.'); }
+  finally { clearTimeout(timer); apexInFlightController = null; apexSending = false; submitBtn.disabled = false; btnText.textContent = "SEND TO QUOTE ENGINE"; }
 });
 </script></body>
 </html>
