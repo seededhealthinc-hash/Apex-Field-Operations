@@ -54,10 +54,10 @@ li b{color:#ff7a00}
 <select id="ctrade"><option>Plumbing</option><option>Electrical</option><option>Heating / Gas</option><option>Carpentry</option><option>Other</option></select>
 <label for="cloc">Job location</label>
 <input id="cloc" placeholder="e.g. Hammersmith W6">
-<label for="cjob">Describe the problem — type it, or tap Speak and talk</label>
-<button id="micBtn" type="button" style="background:#222;color:#fff;border:1px solid #666">🎤 Speak your problem</button>
-<p><small>Speaking is a first option, not an extra — if you find it easier to talk than type, use Speak. If you prefer typing, type. Both work. On iPhone/Android you can also use the keyboard mic.</small></p>
-<textarea id="cjob" placeholder="e.g. Boiler has stopped, house is cold, I have a newborn at home. Or: water leaking under the kitchen sink. Mention gas smell, children, elderly people, or water damage if any apply — it helps the safety advice."></textarea>
+<label for="cjob">What's wrong?</label>
+<button id="micBtn" type="button" style="background:#222;color:#fff;border:1px solid #666">🎤 Tap to talk</button>
+
+<textarea id="cjob" placeholder="e.g. Boiler stopped, house is cold. Or: water leaking under the kitchen sink."></textarea>
 <button id="sendBtn" type="button">Get first reply</button>
 <div id="err"></div>
 <div id="reply"></div>
@@ -78,7 +78,7 @@ li b{color:#ff7a00}
 <button id="hearAgainBtn" type="button">🔊 Hear this reply again</button>
 <button id="stopHearBtn" type="button">⏹ Stop</button>
 </div>
-<div class="note"><b>What happens next, in one line:</b> your message goes to the AI first responder, its reply will appear here when the service responds, and the job is logged for a tradesperson to confirm. No price in this first reply is final — all prices are subject to on-site inspection.</div>
+<div class="note"><b>Not a booking yet.</b> You'll get a first reply here in up to about 2 minutes. A tradesperson confirms the price and time — no price here is final.</div>
 
 <details style="margin-top:16px"><summary>Settings (testing only — webhook for this device)</summary>
 <p><small>For the TESTING page only. In the live version this field will not be shown to customers — the webhook will be built in. Saved on this device only.</small></p>
@@ -96,7 +96,7 @@ function hideReplyReady(){ $('readyBanner').style.display='none'; $('nextStep').
 document.querySelectorAll('.pref-chip').forEach(function(btn){ btn.onclick=function(){ timePref=btn.getAttribute('data-pref'); document.querySelectorAll('.pref-chip').forEach(function(b){b.setAttribute('aria-pressed', b===btn ? 'true' : 'false');}); var c=$('prefConfirm'); c.textContent='Noted \u2014 '+timePref+'. The engineer will reach out. Nothing is confirmed yet.'; c.style.display='block'; }; });
 $('hearAgainBtn').onclick=function(){ if(!('speechSynthesis' in window)){ $('speakNote').innerHTML='<small>Spoken replies are not supported in this browser \u2014 the reply above is shown in large text instead.</small>'; $('speakNote').style.display='block'; return; } speakReplyText(); };
 $('stopHearBtn').onclick=function(){ stopSpeech(); };
-function stopMic(){ if(rec){ try{rec.stop();}catch(e){} rec=null; $('micBtn').textContent='🎤 Speak your problem'; } }
+function stopMic(){ if(rec){ try{rec.stop();}catch(e){} rec=null; $('micBtn').textContent='🎤 Tap to talk'; } }
 $('micBtn').onclick=()=>{
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){alert('Voice is not supported in this browser — type instead, or use your phone keyboard mic. Chrome and Safari with Dictation on do support it.');return;}
@@ -104,8 +104,8 @@ $('micBtn').onclick=()=>{
   rec=new SR();rec.lang='en-GB';rec.continuous=true;rec.interimResults=true;
   dictBase=$('cjob').value?$('cjob').value+' ':'';
   rec.onresult=e=>{let t='';for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;$('cjob').value=dictBase+t;};
-  rec.onend=()=>{rec=null;$('micBtn').textContent='🎤 Speak your problem';};
-  rec.onerror=()=>{rec=null;$('micBtn').textContent='🎤 Speak your problem';};
+  rec.onend=()=>{rec=null;$('micBtn').textContent='🎤 Tap to talk';};
+  rec.onerror=()=>{rec=null;$('micBtn').textContent='🎤 Tap to talk';};
   rec.start();$('micBtn').textContent='⏹ Stop speaking — tap again to stop';
 };
 $('wh').value=localStorage.getItem('apex_customer_webhook')||'';
