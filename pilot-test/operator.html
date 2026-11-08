@@ -21,6 +21,13 @@ section{margin-bottom:16px}
 .hidden{display:none!important}
 .card{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px}
 .card h2{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#ffffff;margin:0 0 12px}
+/* Draft display (Route A, 2026-11-08) — labels near-white on navy, per the 2026-11-08 label fix */
+.quote{font-size:15px;color:#f1f5f9;margin:0 0 12px;white-space:pre-wrap}
+.status{font-size:13px;color:#cbd5e1;margin:0 0 12px}
+.row{display:flex;justify-content:space-between;gap:12px;font-size:14px;margin:0 0 8px}
+.row .k{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#ffffff;flex:0 0 auto}
+.row .v{color:#f1f5f9;text-align:right}
+.tiny{font-size:12px;color:#94a3b8;margin:12px 0 0}
 label.lbl{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#ffffff;margin:0 0 4px}
 .field{margin-bottom:12px}
 input,select,textarea{width:100%;background:#0f172a;border:1px solid #334155;border-radius:12px;padding:12px 14px;color:#fff;font-size:16px}
@@ -93,10 +100,8 @@ nav.bottom .wrap{display:grid;grid-template-columns:repeat(4,1fr);height:64px}
 </section>
 <section id="view-quotes" class="hidden">
 <div class="card"><h2>Quotes Awaiting Approval</h2>
-<p class="small2"><strong>Quotes retrieval and approval are NOT available in this web pilot.</strong></p>
-<p class="small">This tab cannot list live quotes, approve a quote, or send a quote to a customer. That is a pilot blocker, not a finished feature.</p>
-<p class="small">In the live Make flow, a quote stays at Pending Review until a tradesperson gives explicit approval in the backend (see the backend proposal). Until a tested backend read/approval route exists, do not claim approval happens here.</p>
-<p class="small">No live quotes yet in this pilot build.</p></div>
+<p class="small">No quote draft on this page yet. Dispatch a job from the Dispatch tab — when the quote engine answers, the draft appears here as Pending Review. Nothing has been sent to the customer. Approval happens in the backend, not on this page; this tab cannot approve or send a quote.</p>
+<p class="small">If the draft does not appear, check the Sheet (Quote Log) and Calendar — the draft lives there first.</p></div>
 </section>
 <section id="view-route" class="hidden">
 <div class="card"><h2>Route — map pin inside Apex</h2>
@@ -302,6 +307,109 @@ document.getElementById('draftDecisionBtn').addEventListener('click', function()
   document.getElementById('draftDecisionOutOp').textContent='DRAFT outcome (all other gates assumed passed for this preview): '+res.outcome+' — '+res.customerWording+' Note: a real decision also checks working hours, service area and capacity; any failure falls back to a provisional hold.';
 });
 document.getElementById('saveSettingsBtn').addEventListener('click', function() { try { localStorage.setItem('apex_settings', JSON.stringify({ rate: document.getElementById('settingRate').value, callout: document.getElementById('settingCallout').value, markup: document.getElementById('settingMarkup').value, webhook: (function(){ try { return (JSON.parse(localStorage.getItem('apex_settings')||'{}').webhook)||''; } catch(e){ return ''; } })(), /* G3 2026-11-08: webhook field removed; stored connection preserved, never read from a removed element */ settingFirstHour: document.getElementById('settingFirstHour').value, settingEmergency: document.getElementById('settingEmergency').value, settingCalloutPayable: document.getElementById('settingCalloutPayable').value, settingPartsIncluded: document.getElementById('settingPartsIncluded').value, fixedJobs: document.getElementById('fixedJobs').value, settingTowns: document.getElementById('settingTowns').value, settingRadius: document.getElementById('settingRadius').value, settingHours: document.getElementById('settingHours').value, settingGap: document.getElementById('settingGap').value, settingMaxJobs: document.getElementById('settingMaxJobs').value, settingToggle: document.getElementById('settingToggle').value })); document.getElementById('settingsSaved').classList.remove('hidden'); } catch (e) { alert('Could not save on this device.'); } });
+/* Apex — Quotes-tab draft display, Route A (synchronous webhook response).
+   Added 2026-11-08, pilot-test only. Page-side functions the submit handler
+   calls after its fetch to the Make webhook. Contains NO webhook URL, NO
+   secret, NO key, NO real data. The real draft is a prose AI_Quote plus an
+   Estimated_Price RANGE — there are NO line items in the current pipeline
+   output, so no line-item table is rendered here. Travel time comes from
+   the scenario's Distance Matrix step via the Webhook Response module. */
+var APEX_DRAFT = (function () {
+  var PENDING_REVIEW = 'Pending Review';
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /* A draft is "ready" only if it parses as JSON, says status ready, and
+     carries the two fields the page must show. Anything else is not-ready
+     — never render a half draft, never invent a price. */
+  function isReadyDraft(d) {
+    return !!d && typeof d === 'object' && d.status === 'ready' &&
+      typeof d.aiQuote === 'string' && d.aiQuote.length > 0 &&
+      typeof d.estimatedPrice === 'string' && d.estimatedPrice.length > 0;
+  }
+
+  function fmtTime(iso) {
+    try {
+      var dt = new Date(iso);
+      if (isNaN(dt.getTime())) return iso || '';
+      return dt.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return iso || ''; }
+  }
+
+  /* Render a ready draft into the Quotes tab mount element. Labels
+     near-white (#ffffff) on navy (#020617), per the 2026-11-08 label fix.
+     Status is always Pending Review — nothing here sends anything to a
+     customer. */
+  function renderDraft(draft, mount) {
+    var travel = draft.travelText
+      ? '<p class="row"><span class="k">Travel time</span><span class="v">' + esc(draft.travelText) + (draft.distanceText ? ' (' + esc(draft.distanceText) + ')' : '') + '</span></p>'
+      : '<p class="row"><span class="k">Travel time</span><span class="v">Not returned with this draft — see the Calendar event.</span></p>';
+    mount.innerHTML =
+      '<div class="card"><h2>Your quote draft</h2>' +
+      '<p class="status">Status: <strong>' + esc(draft.reviewStatus || PENDING_REVIEW) + '</strong> — nothing has been sent to the customer.</p>' +
+      '<p class="quote">' + esc(draft.aiQuote) + '</p>' +
+      '<p class="row"><span class="k">Estimated price</span><span class="v">' + esc(draft.estimatedPrice) + '</span></p>' +
+      '<p class="row"><span class="k">Diagnosis</span><span class="v">' + esc(draft.diagnosis || '') + '</span></p>' +
+      '<p class="row"><span class="k">Urgency</span><span class="v">' + esc(draft.urgency || '') + '</span></p>' +
+      '<p class="row"><span class="k">Appointment</span><span class="v">' + esc(fmtTime(draft.startTime)) + '</span></p>' +
+      '<p class="row"><span class="k">Location</span><span class="v">' + esc(draft.location || '') + '</span></p>' +
+      travel +
+      '<p class="tiny">Draft generated by the quote engine for this job only. Check it before anything priced reaches the customer. Approval happens in the backend, not on this page.</p>' +
+      '</div>';
+    return 'ready';
+  }
+
+  /* Not-ready fallback. This is the provisional-hold wording: the job was
+     dispatched (or attempted), the draft is not on the page yet, and the
+     price stays Pending Review. It never claims a confirmed booking and
+     never shows a price. `reason` is one of: 'accepted' (Make answered
+     200 Accepted because the 40s response gate passed), 'unparseable',
+     'error', 'timeout'. */
+  function renderNotReady(reason, mount) {
+    var why = {
+      accepted: 'The quote engine is still working on this job — it answered before the draft was ready. The draft will land in the Sheet and Calendar; check there, or try again shortly.',
+      unparseable: 'The quote engine answered, but not with a readable draft. Nothing was invented from it. The draft will land in the Sheet and Calendar; check there.',
+      error: 'The quote engine did not answer cleanly. Your job details are still here and nothing was sent to a customer.',
+      timeout: 'The quote engine took too long to answer. Your job details are still here and nothing was sent to a customer. The draft may still land in the Sheet and Calendar; check there.'
+    }[reason] || 'The draft is not on this page yet.';
+    mount.innerHTML =
+      '<div class="card"><h2>Quote draft — not ready yet</h2>' +
+      '<p class="status">Status: <strong>' + PENDING_REVIEW + '</strong> — provisional hold only. No booking is confirmed and no price is shown.</p>' +
+      '<p class="quote">' + esc(why) + '</p>' +
+      '<p class="tiny">Dispatched jobs are logged as Pending Review. If the draft does not appear, check the Sheet (Quote Log) and Calendar — the draft lives there first. Do not re-send the same job: a duplicate dispatch creates a duplicate quote.</p>' +
+      '</div>';
+    return 'not-ready';
+  }
+
+  /* Route A handler: call with the real fetch Response from the Make
+     webhook. Make returns plain "200 Accepted" when the 40-second
+     response gate passes without a Webhook Response module reaching —
+     that is NOT a draft, it is "not ready yet". A timeout, a network
+     error, or an empty body all land in the same not-ready fallback. */
+  async function handleDispatchResponse(response, mount) {
+    var text = '';
+    try { text = await response.text(); } catch (e) { renderNotReady('error', mount); return { ok: false, state: 'not-ready' }; }
+    if (!text || text.trim() === '' || text.trim() === 'Accepted') { renderNotReady('accepted', mount); return { ok: false, state: 'not-ready' }; }
+    var data;
+    try { data = JSON.parse(text); } catch (e) { renderNotReady('unparseable', mount); return { ok: false, state: 'not-ready' }; }
+    if (!isReadyDraft(data)) { renderNotReady('accepted', mount); return { ok: false, state: 'not-ready' }; }
+    renderDraft(data, mount);
+    return { ok: true, state: 'ready' };
+  }
+
+  return {
+    esc: esc,
+    isReadyDraft: isReadyDraft,
+    renderDraft: renderDraft,
+    renderNotReady: renderNotReady,
+    handleDispatchResponse: handleDispatchResponse
+  };
+})();
+
 var intakeForm = document.getElementById('intakeForm'); var submitBtn = document.getElementById('submitBtn'); var btnText = document.getElementById('btnText'); var statusBanner = document.getElementById('statusBanner');
 /* OFFLINE BANNER (draft 2026-11-03) — no auto-resend, no spoken errors.
    Pre-send offline check blocks the fetch entirely, so nothing is sent.
@@ -329,7 +437,9 @@ intakeForm.addEventListener('submit', async function(e) {
   try {
     var response = await fetch(webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(buildPayload()), signal: controller.signal });
     if (!response.ok) throw new Error("HTTP " + response.status);
-    showBanner('ok', 'Dispatched! Logged as Pending Review — check Make and Sheets next. Approval, if given, happens in the backend, not in this pilot page.');
+    var result = await APEX_DRAFT.handleDispatchResponse(response, document.getElementById('view-quotes'));
+    if (result.ok) { switchTab('quotes', 'Pending Quotes & Review'); showBanner('ok', 'Draft ready below — Pending Review. Check it before anything priced reaches the customer.'); }
+    else { showBanner('ok', 'Dispatched! Logged as Pending Review — the draft is still being generated. Check the Sheet and Calendar, or the Quotes tab, shortly.'); }
   } catch (err) { if (err.name === 'AbortError' || err instanceof TypeError || /network|failed to fetch/i.test(err.message || '')) { showOfflineBanner(); } showBanner('err', 'Failed to trigger webhook: ' + (err.name === 'AbortError' ? 'Timed out after 120 seconds' : err.message) + '. Check the quote-engine connection on this device.'); }
   finally { clearTimeout(timer); apexInFlightController = null; apexSending = false; submitBtn.disabled = false; btnText.textContent = "SEND TO QUOTE ENGINE"; }
 });
