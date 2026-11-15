@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apex Field Operations — How much work is your quoting losing you?</title>
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:680px;margin:0 auto;padding:24px 16px;color:#111;line-height:1.5}
+  .badge{display:inline-block;background:#ffe9a8;border:1px solid #c9a227;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700}
+  h1{font-size:26px;line-height:1.25;margin:12px 0 8px}
+  h2{font-size:19px;margin-top:28px}
+  .card{border:1px solid #ddd;border-radius:12px;padding:16px;margin:14px 0}
+  .q{margin:18px 0}
+  .q p{font-weight:700;margin:0 0 6px}
+  label.opt{display:block;padding:8px 10px;border:1px solid #ccc;border-radius:8px;margin:5px 0;cursor:pointer}
+  label.opt input{margin-right:8px}
+  button{background:#111;color:#fff;border:0;border-radius:10px;padding:12px 18px;font-size:16px;cursor:pointer}
+  button:disabled{opacity:.5;cursor:default}
+  select,textarea,input[type=text]{width:100%;padding:10px;border:1px solid #bbb;border-radius:8px;font-size:16px;box-sizing:border-box}
+  .muted{color:#555;font-size:14px}
+  .score{font-size:40px;font-weight:800}
+  .hidden{display:none}
+  .insight{border-left:4px solid #111;padding:8px 12px;margin:10px 0;background:#f6f6f6}
+</style>
+</head>
+<body>
+<noscript><p>This scorecard needs JavaScript turned on to run.</p></noscript>
+<p class="muted">Apex Field Operations · Nothing is stored on this page — if you choose to send your score, it goes by your own email.</p>
+
+<div id="landing">
+  <h1>How much work and money is your trade business losing to paperwork, missed calls and slow quotes?</h1>
+  <p>Answer 15 questions. We score three things: <strong>quote speed, follow-up / missed work, and admin time</strong> — then give you up to three fixes specific to your answers.</p>
+  <p><strong>3 minutes · Free · Your result straight away, no email needed to see it.</strong></p>
+  <p class="muted">What Apex does, plainly: you speak the job out loud, it becomes a quote draft with a price range, travel time added, logged in a Sheet and Calendar. Nothing priced goes to a customer until you check it first.</p>
+  <button onclick="showQuiz()">Start now — 15 questions</button>
+  <p class="muted">Built from Daniel Priestley's scorecard structure (landing page → questionnaire → dynamic results), rebuilt here as a £0 static page — no ScoreApp, no subscription.</p>
+</div>
+
+<form id="quiz" class="hidden" onsubmit="return false">
+  <h2>Your quoting — 10 questions</h2>
+  <p class="muted">Yes / Sometimes / No. Be honest — a low score is not a fail, it is where the leak is.</p>
+  <div id="scored"></div>
+
+  <h2>About your business — 5 questions</h2>
+  <p class="muted">These do not change your score. They decide the right next step for you.</p>
+  <div class="q"><p>11. Your trade?</p>
+    <select id="q11"><option value="">Choose…</option><option>Plumbing</option><option>Heating</option><option>Electrical</option><option>Gas</option><option>Carpentry</option><option>Roofing</option><option>Other trade</option></select></div>
+  <div class="q"><p>12. Team size?</p>
+    <select id="q12"><option value="">Choose…</option><option>Just me</option><option>2–3 people</option><option>4+ people</option></select></div>
+  <div class="q"><p>13. Jobs in a typical week?</p>
+    <select id="q13"><option value="">Choose…</option><option>Under 5</option><option>5–10</option><option>11–20</option><option>20+</option></select></div>
+  <div class="q"><p>14. In the next 90 days, what matters most?</p>
+    <select id="q14"><option value="">Choose…</option><option>Faster quotes</option><option>Fewer missed jobs</option><option>Less evening paperwork</option><option>More quotes won</option></select></div>
+  <div class="q"><p>15. Biggest obstacle right now — and what do you think you need to fix it? (optional)</p>
+    <textarea id="q15" rows="3" placeholder="In your own words…"></textarea></div>
+
+  <button id="resultBtn" onclick="showResult()">See my score and fixes</button>
+  <p class="muted">Your answers stay on this page unless you choose to send them.</p>
+</form>
+
+<div id="result" class="hidden">
+  <h2>Your result</h2>
+  <p><span class="score" id="scoreOut">–</span> <span id="bandOut"></span> <span class="muted">/ 20</span></p>
+  <p id="bandText"></p>
+  <h2 id="insightsHeading">Your three fixes — specific to your answers</h2>
+  <div id="insights"></div>
+  <div id="nextStep" class="card"></div>
+  <p class="muted">Apex can only promise what it has proven: speak the job, quote draft with a price range, travel added, Sheet and Calendar, nothing priced sent unchecked. No guaranteed bookings, no hours-saved claim.</p>
+  <button onclick="location.reload()">Start again</button>
+</div>
+
+<p class="muted">Seeded Health Ltd · Company number 16965347 · 3rd Floor, 86-90 Paul Street, London, EC2A 4NE · Seeded Health Ltd is not currently registered for UK VAT; no VAT is charged or added. Payments through Levy &amp; Loom only.</p>
+
+<script>
+const SCORED = [
+ ["Do you send most quotes the same day you see the job?","Same-day quotes win jobs that next-day quotes lose. If the quote waits until tonight, another tradesperson has already sent theirs."],
+ ["Are all your quotes tracked in one place, so none go quiet unnoticed?","A quote with no home is a quote that goes quiet. One list, checked daily, is the difference between a follow-up and a lost job."],
+ ["Do you check and confirm the price before a customer ever sees it?","Nothing priced should reach a customer unchecked. Your check is the safety step — Apex keeps priced quotes in Pending Review until you say yes."],
+ ["Do you follow up quotes that go quiet, instead of leaving them?","Quiet quotes are not lost jobs yet — they are jobs with no follow-up. One short check-in brings back work you already quoted for."],
+ ["Does a missed call get a reply the same day?","A missed call with no reply is a job for someone else. Same-day reply, even a short one, keeps the customer with you."],
+ ["Is travel time added to the quote, not absorbed?","Travel you absorb is pay you lose. Add it as a line, every time, so the job pays for the journey as well as the work."],
+ ["Do jobs land in your calendar without you re-typing them?","Re-typing a job is a second chance to get it wrong — and time you never get back. One entry, from quote to calendar, is the fix."],
+ ["Is your quoting / paperwork finished before the evening, not after it?","Paperwork that follows you home is the job that never ends. Finish it on site, while the job is fresh, and the evening is yours."],
+ ["Do you know which of your quotes turned into jobs, and which did not?","If you cannot see which quotes won, you cannot fix the ones that lost. Count wins and losses for a week — the pattern shows itself."],
+ ["Do you have your standard rates written down — call-out / per-hour, plus an out-of-hours rate after a set time?","Written rates are what make a fast quote possible — no working it out from scratch every time, and extra parts are agreed before any work."]
+];
+const scoredDiv = document.getElementById('scored');
+SCORED.forEach((q,i)=>{
+  const d=document.createElement('div'); d.className='q';
+  d.innerHTML='<p>'+(i+1)+'. '+q[0]+'</p>'+
+   ['Yes','Sometimes','No'].map((label,j)=>'<label class="opt"><input type="radio" name="s'+i+'" value="'+(2-j)+'"> '+label+'</label>').join('');
+  scoredDiv.appendChild(d);
+});
+function showQuiz(){document.getElementById('landing').classList.add('hidden');document.getElementById('quiz').classList.remove('hidden');window.scrollTo(0,0);}
+function sendScore(){
+  const score=document.getElementById('scoreOut').textContent;
+  const band=document.getElementById('bandOut').textContent;
+  const emailEl=document.getElementById('contactEmail');
+  const email=emailEl?emailEl.value.trim():'';
+  const lines=[];
+  lines.push('Apex scorecard result: '+score+' / 20 '+band);
+  lines.push('Trade: '+document.getElementById('q11').value);
+  lines.push('Team size: '+document.getElementById('q12').value);
+  lines.push('Jobs in a typical week: '+document.getElementById('q13').value);
+  lines.push('What matters most in the next 90 days: '+document.getElementById('q14').value);
+  lines.push('Biggest obstacle: '+(document.getElementById('q15').value.trim()||'—'));
+  const fixes=document.querySelectorAll('#insights .insight');
+  fixes.forEach(function(f){lines.push('Fix: '+f.textContent.trim());});
+  const nextH=document.querySelector('#nextStep h3');
+  if(nextH){lines.push('Next step shown: '+nextH.textContent);}
+  if(email){lines.push('Contact email: '+email);}
+  const subject='Apex scorecard result — '+score+'/20'+band;
+  location.href='mailto:alize@seededhealth.co.uk?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(lines.join('\n'));
+}
+function showResult(){
+  let score=0, lows=[];
+  for(let i=0;i<10;i++){
+    const sel=document.querySelector('input[name=s'+i+']:checked');
+    if(!sel){alert('Please answer question '+(i+1)+' first.');return;}
+    const v=parseInt(sel.value,10); score+=v; lows.push({i,v});
+  }
+  for(let q=11;q<=14;q++){
+    if(!document.getElementById('q'+q).value){alert('Please answer question '+q+' first.');return;}
+  }
+  lows.sort((a,b)=>a.v-b.v);
+  const trueLows = lows.filter(l=>l.v<2);
+  const shown = trueLows.slice(0,3);
+  const heading = document.getElementById('insightsHeading');
+  heading.textContent = shown.length===0 ? 'Your quoting — no weak spots in your answers'
+    : shown.length===1 ? 'Your one fix — specific to your answers'
+    : shown.length===2 ? 'Your two fixes — specific to your answers'
+    : 'Your three fixes — specific to your answers';
+  const band = score<=7?'Leaking':score<=12?'Patchy':score<=15?'Mostly tight':'Tight already';
+  const bandText = score<=7?'Quotes, follow-ups or admin are costing you work most weeks.':score<=12?'Parts of your quoting work, parts leak.':score<=15?'Mostly tight — a few leaks left.':'Little for Apex to fix on quoting alone.';
+  document.getElementById('scoreOut').textContent=score;
+  document.getElementById('bandOut').textContent='— '+band;
+  document.getElementById('bandText').textContent=bandText;
+  const ins=document.getElementById('insights'); ins.innerHTML='';
+  if(shown.length===0){
+    const d=document.createElement('div'); d.className='insight';
+    d.innerHTML='Every question scored full marks — no weak spot to fix from these answers.';
+    ins.appendChild(d);
+  }
+  shown.forEach(l=>{
+    const d=document.createElement('div'); d.className='insight';
+    d.innerHTML='<strong>'+SCORED[l.i][0]+'</strong><br>'+SCORED[l.i][1];
+    ins.appendChild(d);
+  });
+  const jobs=document.getElementById('q13').value;
+  const manyJobs = jobs!=='Under 5';
+  const goal=document.getElementById('q14').value;
+  const pilotGoal = goal!=='More quotes won';
+  const next=document.getElementById('nextStep');
+  if(score<=12 && manyJobs && pilotGoal){
+    next.innerHTML='<h3 style="margin-top:0">Next step: Apex pilot — setup waived for measured data</h3><p>Your score and your job volume make you a strong pilot fit. Pilot: up to 21 days or 10 eligible completed quotes from when you start. Setup waived (£495 usual setup not charged for the pilot). £79/month retainer from week 3 unless you cancel per the terms. Cancel with at least 48 hours\' notice before renewal; you keep access to the end of the paid period; no partial refunds. Testimonial only if it worked — separate, optional, withdrawable. No guaranteed bookings, no hours-saved claim. Pilot places are limited to 15, first come first served. Places go to strong fits who reply first — lowest leakage score, 5+ jobs a week, and a 90-day goal we can help with. Seeded Health Ltd is not currently registered for UK VAT; no VAT is charged or added. Payments through Levy &amp; Loom only.</p><p class="muted">Tap the button and your email app opens with your score ready to send to Apex. Nothing is stored on this page.</p><label class="muted">Your email (so we can reply)</label><input type="text" id="contactEmail" placeholder="you@yourbusiness.co.uk"><p><button onclick="sendScore()">Send my score to Apex</button></p>';
+  } else if(score<=15){
+    next.innerHTML='<h3 style="margin-top:0">Next step: work through the fixes above for a week</h3><p>Work through the fixes above for a week, then re-take this scorecard and see what moved. If the leaks are still there at 5+ jobs a week, the Apex pilot is the next step — ask to join the waitlist. Places go to the strongest fits — lowest leakage score, 5+ jobs a week, and a 90-day goal we can help with. We are taking up to 15 pilot places, first come first served. If you are not selected, we will offer you a discount on onboarding for your interest — we will confirm the amount when we reply to you.</p><p class="muted">Tap the button and your email app opens with your score ready to send to Apex. Nothing is stored on this page.</p><label class="muted">Your email for the waitlist (so we can reply)</label><input type="text" id="contactEmail" placeholder="you@yourbusiness.co.uk"><p><button onclick="sendScore()">Send my score to Apex</button></p>';
+  } else {
+    next.innerHTML='<h3 style="margin-top:0">Next step: tips only — no hard sell</h3><p>Your quoting is already tight. Keep the fixes above as a check, and re-take this in a month if your volume or team changes. Apex is built for tradespeople whose quoting is leaking work — right now, that is not you.</p>';
+  }
+  document.getElementById('quiz').classList.add('hidden');
+  document.getElementById('result').classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
