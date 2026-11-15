@@ -33,7 +33,7 @@
   .score{font-size:40px;font-weight:800}
   .hidden{display:none}
   .insight{border-left:4px solid var(--accent);padding:8px 12px;margin:10px 0;background:#f6f6f6}
-  .progress{margin:16px 0 4px}
+  .progress{margin:16px 0 4px;position:sticky;top:0;background:#fff;padding:8px 0 6px;z-index:10}
   .progress .bar{height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden}
   .progress .fill{height:100%;width:0%;background:var(--accent);border-radius:999px;transition:width .2s}
   .progress .lbl{font-size:14px;font-weight:700;margin-bottom:6px}
@@ -153,7 +153,7 @@ function leadForm(score,band,fixesText,nextStepText){
   const trade=document.getElementById('q11').value;
   const trades=['Plumbing','Heating','Electrical','Gas','Carpentry','Roofing','Other trade'];
   const opts=trades.map(t=>'<option'+(t===trade?' selected':'')+'>'+t+'</option>').join('');
-  return '<form class="leadform" action="https://formsubmit.co/alize@seededhealth.co.uk" method="POST">'
+  return '<form class="leadform" action="https://formsubmit.co/a070e6cd07beaae2adb215d13fab3243" method="POST">'
   +'<input type="hidden" name="_subject" value="New Apex scorecard lead — '+esc(score)+'/20'+esc(band)+'">'
   +'<input type="hidden" name="_template" value="table">'
   +'<input type="hidden" name="_captcha" value="false">'
