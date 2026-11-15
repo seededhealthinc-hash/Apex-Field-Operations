@@ -5,38 +5,79 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Apex Field Operations — How much work is your quoting losing you?</title>
 <style>
-  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:680px;margin:0 auto;padding:24px 16px;color:#111;line-height:1.5}
-  .badge{display:inline-block;background:#ffe9a8;border:1px solid #c9a227;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700}
+  :root{--ink:#0f172a;--accent:#f97316;--accent-dark:#ea6a0a;--slate:#334155;--muted:#555;--line:#ddd}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:680px;margin:0 auto;padding:0 16px 24px;color:#111;line-height:1.5}
+  .brandbar{background:var(--ink);color:#fff;margin:0 -16px;padding:12px 16px;display:flex;align-items:center;gap:10px}
+  .brandbar .word{font-weight:800;letter-spacing:.14em;font-size:19px}
+  .brandbar .sub{font-size:12px;color:#cbd5e1;letter-spacing:.08em}
+  .hero{background:var(--ink);color:#fff;margin:0 -16px;padding:28px 16px 24px}
+  .hero h1{font-size:28px;line-height:1.2;margin:0 0 10px;color:#fff}
+  .hero p{color:#cbd5e1;margin:8px 0}
+  .hero .pillrow{margin:14px 0 18px}
+  .pill{display:inline-block;background:#1e293b;border:1px solid #334155;color:#fff;padding:6px 12px;border-radius:999px;font-size:14px;font-weight:700;margin:0 6px 6px 0}
   h1{font-size:26px;line-height:1.25;margin:12px 0 8px}
   h2{font-size:19px;margin-top:28px}
-  .card{border:1px solid #ddd;border-radius:12px;padding:16px;margin:14px 0}
+  .card{border:1px solid var(--line);border-radius:12px;padding:16px;margin:14px 0}
+  .trust h3{margin:0 0 6px;font-size:16px}
+  .trust p{margin:6px 0}
   .q{margin:18px 0}
   .q p{font-weight:700;margin:0 0 6px}
-  label.opt{display:block;padding:8px 10px;border:1px solid #ccc;border-radius:8px;margin:5px 0;cursor:pointer}
+  label.opt{display:block;padding:12px 10px;border:1px solid #ccc;border-radius:8px;margin:5px 0;cursor:pointer;min-height:44px;box-sizing:border-box}
   label.opt input{margin-right:8px}
-  button{background:#111;color:#fff;border:0;border-radius:10px;padding:12px 18px;font-size:16px;cursor:pointer}
+  button{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:12px 18px;font-size:16px;cursor:pointer;min-height:48px}
+  button:hover{background:var(--accent-dark)}
   button:disabled{opacity:.5;cursor:default}
-  select,textarea,input[type=text]{width:100%;padding:10px;border:1px solid #bbb;border-radius:8px;font-size:16px;box-sizing:border-box}
-  .muted{color:#555;font-size:14px}
+  button.big{width:100%;padding:16px 22px;font-size:18px;font-weight:700;min-height:56px}
+  select,textarea,input[type=text],input[type=email]{width:100%;padding:12px;border:1px solid #bbb;border-radius:8px;font-size:16px;box-sizing:border-box}
+  .muted{color:var(--muted);font-size:14px}
   .score{font-size:40px;font-weight:800}
   .hidden{display:none}
-  .insight{border-left:4px solid #111;padding:8px 12px;margin:10px 0;background:#f6f6f6}
+  .insight{border-left:4px solid var(--accent);padding:8px 12px;margin:10px 0;background:#f6f6f6}
+  .progress{margin:16px 0 4px}
+  .progress .bar{height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden}
+  .progress .fill{height:100%;width:0%;background:var(--accent);border-radius:999px;transition:width .2s}
+  .progress .lbl{font-size:14px;font-weight:700;margin-bottom:6px}
+  .honey{display:none}
+  .thanks{background:#dcfce7;border:1px solid #34d399;border-radius:12px;padding:16px;margin:16px 0}
+  .leadform label{display:block;font-weight:700;margin:12px 0 4px}
+  .leadform button{width:100%;padding:16px 22px;font-size:18px;font-weight:700;min-height:56px;margin-top:14px}
 </style>
 </head>
 <body>
 <noscript><p>This scorecard needs JavaScript turned on to run.</p></noscript>
-<p class="muted">Apex Field Operations · Nothing is stored on this page — if you choose to send your score, it goes by your own email.</p>
+
+<div class="brandbar">
+  <svg width="34" height="34" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8 L92 88 L8 88 Z" fill="none" stroke="#f97316" stroke-width="10" stroke-linejoin="round"/><text x="50" y="78" font-size="54" font-weight="800" fill="#f97316" text-anchor="middle" font-family="system-ui,Arial,sans-serif">A</text></svg>
+  <span><span class="word">APEX</span><br><span class="sub">FIELD OPERATIONS</span></span>
+</div>
+
+<div id="thanks" class="thanks hidden">
+  <strong>Thanks — your score is with Apex.</strong><br>
+  We will reply about the pilot or the waitlist. If you are a strong fit, pilot places go first come first served.
+</div>
 
 <div id="landing">
-  <h1>How much work and money is your trade business losing to paperwork, missed calls and slow quotes?</h1>
-  <p>Answer 15 questions. We score three things: <strong>quote speed, follow-up / missed work, and admin time</strong> — then give you up to three fixes specific to your answers.</p>
-  <p><strong>3 minutes · Free · Your result straight away, no email needed to see it.</strong></p>
-  <p class="muted">What Apex does, plainly: you speak the job out loud, it becomes a quote draft with a price range, travel time added, logged in a Sheet and Calendar. Nothing priced goes to a customer until you check it first.</p>
-  <button onclick="showQuiz()">Start now — 15 questions</button>
-  <p class="muted">Built from Daniel Priestley's scorecard structure (landing page → questionnaire → dynamic results), rebuilt here as a £0 static page — no ScoreApp, no subscription.</p>
+  <div class="hero">
+    <h1>How much work and money is your trade business losing to paperwork, missed calls and slow quotes?</h1>
+    <p>Answer 15 questions. We score three things: <strong>quote speed, follow-up / missed work, and admin time</strong> — then give you up to three fixes specific to your answers.</p>
+    <div class="pillrow"><span class="pill">3 minutes</span><span class="pill">Free</span><span class="pill">Your result straight away</span></div>
+    <button class="big" onclick="showQuiz()">Start now — 15 questions</button>
+  </div>
+
+  <div class="card trust">
+    <h3>Who's behind Apex</h3>
+    <p>Apex is built by <strong>Seeded Health Ltd</strong> — a small team building tools for independent tradespeople.</p>
+    <h3>Who it's for</h3>
+    <p>Independent tradespeople — one to five people — in plumbing, heating, electrical, gas, carpentry and roofing, who quote jobs on the go and lose work to slow paperwork.</p>
+    <p class="muted">What Apex does, plainly: you speak the job out loud, it becomes a quote draft with a price range, travel time added, logged in a Sheet and Calendar. Nothing priced goes to a customer until you check it first.</p>
+  </div>
 </div>
 
 <form id="quiz" class="hidden" onsubmit="return false">
+  <div class="progress">
+    <div class="lbl" id="progressLbl">Question 1 of 15</div>
+    <div class="bar"><div class="fill" id="progressFill"></div></div>
+  </div>
   <h2>Your quoting — 10 questions</h2>
   <p class="muted">Yes / Sometimes / No. Be honest — a low score is not a fail, it is where the leak is.</p>
   <div id="scored"></div>
@@ -54,7 +95,7 @@
   <div class="q"><p>15. Biggest obstacle right now — and what do you think you need to fix it? (optional)</p>
     <textarea id="q15" rows="3" placeholder="In your own words…"></textarea></div>
 
-  <button id="resultBtn" onclick="showResult()">See my score and fixes</button>
+  <button id="resultBtn" class="big" onclick="showResult()">See my score and fixes</button>
   <p class="muted">Your answers stay on this page unless you choose to send them.</p>
 </form>
 
@@ -70,6 +111,7 @@
 </div>
 
 <p class="muted">Seeded Health Ltd · Company number 16965347 · 3rd Floor, 86-90 Paul Street, London, EC2A 4NE · Seeded Health Ltd is not currently registered for UK VAT; no VAT is charged or added. Payments through Levy &amp; Loom only.</p>
+<p class="muted">Your answers stay on this page unless you send them. If you send your score, we only use your details to reply about the pilot or the waitlist. Nothing is stored on this page.</p>
 
 <script>
 const SCORED = [
@@ -91,26 +133,46 @@ SCORED.forEach((q,i)=>{
    ['Yes','Sometimes','No'].map((label,j)=>'<label class="opt"><input type="radio" name="s'+i+'" value="'+(2-j)+'"> '+label+'</label>').join('');
   scoredDiv.appendChild(d);
 });
-function showQuiz(){document.getElementById('landing').classList.add('hidden');document.getElementById('quiz').classList.remove('hidden');window.scrollTo(0,0);}
-function sendScore(){
-  const score=document.getElementById('scoreOut').textContent;
-  const band=document.getElementById('bandOut').textContent;
-  const emailEl=document.getElementById('contactEmail');
-  const email=emailEl?emailEl.value.trim():'';
-  const lines=[];
-  lines.push('Apex scorecard result: '+score+' / 20 '+band);
-  lines.push('Trade: '+document.getElementById('q11').value);
-  lines.push('Team size: '+document.getElementById('q12').value);
-  lines.push('Jobs in a typical week: '+document.getElementById('q13').value);
-  lines.push('What matters most in the next 90 days: '+document.getElementById('q14').value);
-  lines.push('Biggest obstacle: '+(document.getElementById('q15').value.trim()||'—'));
-  const fixes=document.querySelectorAll('#insights .insight');
-  fixes.forEach(function(f){lines.push('Fix: '+f.textContent.trim());});
-  const nextH=document.querySelector('#nextStep h3');
-  if(nextH){lines.push('Next step shown: '+nextH.textContent);}
-  if(email){lines.push('Contact email: '+email);}
-  const subject='Apex scorecard result — '+score+'/20'+band;
-  location.href='mailto:alize@seededhealth.co.uk?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(lines.join('\n'));
+function answeredCount(){
+  let n=0;
+  for(let i=0;i<10;i++){ if(document.querySelector('input[name=s'+i+']:checked')){n++;} }
+  for(let q=11;q<=14;q++){ if(document.getElementById('q'+q).value){n++;} }
+  if(document.getElementById('q15').value.trim()){n++;}
+  return n;
+}
+function updateProgress(){
+  const n=answeredCount();
+  document.getElementById('progressLbl').textContent='Question '+Math.min(n+1,15)+' of 15';
+  document.getElementById('progressFill').style.width=Math.round(n/15*100)+'%';
+}
+document.getElementById('quiz').addEventListener('change',updateProgress);
+document.getElementById('quiz').addEventListener('input',updateProgress);
+function showQuiz(){document.getElementById('landing').classList.add('hidden');document.getElementById('quiz').classList.remove('hidden');updateProgress();window.scrollTo(0,0);}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function leadForm(score,band,fixesText,nextStepText){
+  const trade=document.getElementById('q11').value;
+  const trades=['Plumbing','Heating','Electrical','Gas','Carpentry','Roofing','Other trade'];
+  const opts=trades.map(t=>'<option'+(t===trade?' selected':'')+'>'+t+'</option>').join('');
+  return '<form class="leadform" action="https://formsubmit.co/alize@seededhealth.co.uk" method="POST">'
+  +'<input type="hidden" name="_subject" value="New Apex scorecard lead — '+esc(score)+'/20'+esc(band)+'">'
+  +'<input type="hidden" name="_template" value="table">'
+  +'<input type="hidden" name="_captcha" value="false">'
+  +'<input type="hidden" name="_next" value="https://seededhealthinc-hash.github.io/Apex-Field-Operations/scorecard/?sent=1">'
+  +'<input type="text" name="_honey" class="honey" tabindex="-1" autocomplete="off">'
+  +'<input type="hidden" name="score" value="'+esc(score)+' / 20">'
+  +'<input type="hidden" name="band" value="'+esc(band)+'">'
+  +'<input type="hidden" name="team_size" value="'+esc(document.getElementById('q12').value)+'">'
+  +'<input type="hidden" name="jobs_per_week" value="'+esc(document.getElementById('q13').value)+'">'
+  +'<input type="hidden" name="goal_90_days" value="'+esc(document.getElementById('q14').value)+'">'
+  +'<input type="hidden" name="obstacle" value="'+esc(document.getElementById('q15').value.trim()||'—')+'">'
+  +'<input type="hidden" name="fixes" value="'+esc(fixesText)+'">'
+  +'<input type="hidden" name="next_step" value="'+esc(nextStepText)+'">'
+  +'<label>Your name</label><input type="text" name="name" required placeholder="Your name">'
+  +'<label>Your email</label><input type="email" name="email" required placeholder="you@yourbusiness.co.uk">'
+  +'<label>Your trade</label><select name="trade">'+opts+'</select>'
+  +'<button type="submit">Send my score</button>'
+  +'<p class="muted">We only use your details to reply about the pilot or the waitlist.</p>'
+  +'</form>';
 }
 function showResult(){
   let score=0, lows=[];
@@ -146,21 +208,25 @@ function showResult(){
     d.innerHTML='<strong>'+SCORED[l.i][0]+'</strong><br>'+SCORED[l.i][1];
     ins.appendChild(d);
   });
+  const fixesText = shown.length===0 ? 'No weak spots — full marks.' : shown.map(l=>SCORED[l.i][0]+' — '+SCORED[l.i][1]).join(' | ');
   const jobs=document.getElementById('q13').value;
   const manyJobs = jobs!=='Under 5';
   const goal=document.getElementById('q14').value;
   const pilotGoal = goal!=='More quotes won';
   const next=document.getElementById('nextStep');
   if(score<=12 && manyJobs && pilotGoal){
-    next.innerHTML='<h3 style="margin-top:0">Next step: Apex pilot — setup waived for measured data</h3><p>Your score and your job volume make you a strong pilot fit. Pilot: up to 21 days or 10 eligible completed quotes from when you start. Setup waived (£495 usual setup not charged for the pilot). £79/month retainer from week 3 unless you cancel per the terms. Cancel with at least 48 hours\' notice before renewal; you keep access to the end of the paid period; no partial refunds. Testimonial only if it worked — separate, optional, withdrawable. No guaranteed bookings, no hours-saved claim. Pilot places are limited to 15, first come first served. Places go to strong fits who reply first — lowest leakage score, 5+ jobs a week, and a 90-day goal we can help with. Seeded Health Ltd is not currently registered for UK VAT; no VAT is charged or added. Payments through Levy &amp; Loom only.</p><p class="muted">Tap the button and your email app opens with your score ready to send to Apex. Nothing is stored on this page.</p><label class="muted">Your email (so we can reply)</label><input type="text" id="contactEmail" placeholder="you@yourbusiness.co.uk"><p><button onclick="sendScore()">Send my score to Apex</button></p>';
+    next.innerHTML='<h3 style="margin-top:0">Next step: Apex pilot — setup waived for measured data</h3><p>Your score and your job volume make you a strong pilot fit. Pilot: up to 21 days or 10 eligible completed quotes from when you start. Setup waived (£495 usual setup not charged for the pilot). £79/month retainer from week 3 unless you cancel per the terms. Cancel with at least 48 hours\' notice before renewal; you keep access to the end of the paid period; no partial refunds. Testimonial only if it worked — separate, optional, withdrawable. No guaranteed bookings, no hours-saved claim. Pilot places are limited to 15, first come first served. Places go to strong fits who reply first — lowest leakage score, 5+ jobs a week, and a 90-day goal we can help with. Seeded Health Ltd is not currently registered for UK VAT; no VAT is charged or added. Payments through Levy &amp; Loom only.</p>'+leadForm(score,'— '+band,fixesText,'Pilot fit');
   } else if(score<=15){
-    next.innerHTML='<h3 style="margin-top:0">Next step: work through the fixes above for a week</h3><p>Work through the fixes above for a week, then re-take this scorecard and see what moved. If the leaks are still there at 5+ jobs a week, the Apex pilot is the next step — ask to join the waitlist. Places go to the strongest fits — lowest leakage score, 5+ jobs a week, and a 90-day goal we can help with. We are taking up to 15 pilot places, first come first served. If you are not selected, we will offer you a discount on onboarding for your interest — we will confirm the amount when we reply to you.</p><p class="muted">Tap the button and your email app opens with your score ready to send to Apex. Nothing is stored on this page.</p><label class="muted">Your email for the waitlist (so we can reply)</label><input type="text" id="contactEmail" placeholder="you@yourbusiness.co.uk"><p><button onclick="sendScore()">Send my score to Apex</button></p>';
+    next.innerHTML='<h3 style="margin-top:0">Next step: work through the fixes above for a week</h3><p>Work through the fixes above for a week, then re-take this scorecard and see what moved. If the leaks are still there at 5+ jobs a week, the Apex pilot is the next step — ask to join the waitlist. Places go to the strongest fits — lowest leakage score, 5+ jobs a week, and a 90-day goal we can help with. We are taking up to 15 pilot places, first come first served. If you are not selected, we will offer you a discount on onboarding for your interest — we will confirm the amount when we reply to you.</p>'+leadForm(score,'— '+band,fixesText,'Waitlist');
   } else {
     next.innerHTML='<h3 style="margin-top:0">Next step: tips only — no hard sell</h3><p>Your quoting is already tight. Keep the fixes above as a check, and re-take this in a month if your volume or team changes. Apex is built for tradespeople whose quoting is leaking work — right now, that is not you.</p>';
   }
   document.getElementById('quiz').classList.add('hidden');
   document.getElementById('result').classList.remove('hidden');
   window.scrollTo(0,0);
+}
+if(new URLSearchParams(location.search).get('sent')==='1'){
+  document.getElementById('thanks').classList.remove('hidden');
 }
 </script>
 </body>
